@@ -10,11 +10,30 @@ public static class DatabaseSeeder
     public static async Task SeedAsync(IDbConnection connection)
     {
         var categoryCount = await connection.ExecuteScalarAsync<int>("SELECT COUNT(1) FROM Categories");
-        if (categoryCount > 0)
+        var categoryIds = new Dictionary<string, Guid>();
+        var now = DateTime.UtcNow;
+
+        if (categoryCount == 0)
         {
-            return;
+            await SeedCategoriesAndLocationsAsync(connection, categoryIds, now);
+        }
+        else
+        {
+            var rows = await connection.QueryAsync<(string Slug, Guid Id)>("SELECT Slug, Id FROM Categories");
+            foreach (var (slug, id) in rows)
+            {
+                categoryIds[slug] = id;
+            }
         }
 
+        await SeedSampleListingsAsync(connection, categoryIds, now);
+    }
+
+    private static async Task SeedCategoriesAndLocationsAsync(
+        IDbConnection connection,
+        Dictionary<string, Guid> categoryIds,
+        DateTime now)
+    {
         var categories = new (string Name, string Slug, string Icon, int Sort)[]
         {
             ("Vehicles", "vehicles", "/icons/vehicles.svg", 1),
@@ -34,9 +53,6 @@ public static class DatabaseSeeder
             ("Work Overseas", "work-overseas", "/icons/overseas.svg", 15),
             ("Other", "other", "/icons/other.svg", 16)
         };
-
-        var categoryIds = new Dictionary<string, Guid>();
-        var now = DateTime.UtcNow;
 
         foreach (var (name, slug, icon, sort) in categories)
         {
@@ -127,6 +143,164 @@ public static class DatabaseSeeder
                 INSERT INTO Locations (Id, Name, Slug, Type, ParentLocationId, SortOrder, IsActive, CreatedAt)
                 VALUES (@Id, @Name, @Slug, @Type, @ParentLocationId, @SortOrder, 1, @CreatedAt)",
                 new { Id = Guid.NewGuid(), Name = name, Slug = slug, Type = (int)LocationType.City, ParentLocationId = colomboId, SortOrder = sort, CreatedAt = now });
+        }
+    }
+
+    private static async Task SeedSampleListingsAsync(
+        IDbConnection connection,
+        Dictionary<string, Guid> categoryIds,
+        DateTime now)
+    {
+        var listingCount = await connection.ExecuteScalarAsync<int>("SELECT COUNT(1) FROM Listings");
+        if (listingCount > 0)
+        {
+            return;
+        }
+
+        var sellerId = SeedUserIds.Seller;
+        var featuredUntil = now.AddMonths(3);
+
+        var samples = new (string Title, string Slug, string Category, decimal Price, string City, string District, string Desc, string Image, bool Featured)[]
+        {
+            (
+                "3 Bedroom House For Sale in Colombo 05",
+                "3-bedroom-house-colombo-05",
+                "property",
+                4500000m,
+                "Colombo 05",
+                "Colombo",
+                "Beautiful 3 bedroom house with garden, parking, and modern kitchen. Close to schools and shopping.",
+                "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+                true
+            ),
+            (
+                "Luxury Villa With Pool in Galle",
+                "luxury-villa-pool-galle",
+                "property",
+                12500000m,
+                "Galle",
+                "Galle",
+                "Stunning beach-side villa with private pool, 4 bedrooms, and ocean views.",
+                "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80",
+                true
+            ),
+            (
+                "Modern Apartment For Rent in Kandy",
+                "modern-apartment-rent-kandy",
+                "property",
+                85000m,
+                "Kandy",
+                "Kandy",
+                "Fully furnished 2 bedroom apartment in central Kandy. Available immediately.",
+                "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
+                true
+            ),
+            (
+                "Toyota Prius 2018 — Low Mileage",
+                "toyota-prius-2018",
+                "vehicles",
+                7200000m,
+                "Colombo 03",
+                "Colombo",
+                "Well maintained Toyota Prius 2018, single owner, full service history.",
+                "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&q=80",
+                true
+            ),
+            (
+                "iPhone 15 Pro Max 256GB",
+                "iphone-15-pro-max-256gb",
+                "mobiles",
+                385000m,
+                "Colombo 07",
+                "Colombo",
+                "Brand new sealed iPhone 15 Pro Max, 256GB, with official warranty.",
+                "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=800&q=80",
+                false
+            ),
+            (
+                "Samsung 55\" Smart TV",
+                "samsung-55-smart-tv",
+                "electronics",
+                175000m,
+                "Negombo",
+                "Gampaha",
+                "Samsung 55 inch 4K Smart TV, barely used, with remote and wall mount.",
+                "https://images.unsplash.com/photo-1593359677873-a4bb92f829e1?w=800&q=80",
+                false
+            ),
+            (
+                "Office Space For Rent — Colombo 01",
+                "office-space-rent-colombo-01",
+                "property",
+                120000m,
+                "Colombo 01",
+                "Colombo",
+                "Prime commercial office space, 1200 sq.ft, fully air-conditioned.",
+                "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80",
+                false
+            ),
+            (
+                "Honda CB250F Motorcycle",
+                "honda-cb250f-motorcycle",
+                "vehicles",
+                890000m,
+                "Kalutara",
+                "Kalutara",
+                "Honda CB250F in excellent condition, recently serviced.",
+                "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=800&q=80",
+                false
+            ),
+        };
+
+        foreach (var (title, slug, category, price, city, district, desc, image, featured) in samples)
+        {
+            var listingId = Guid.NewGuid();
+            var imageId = Guid.NewGuid();
+            var publishedAt = now.AddDays(-Random.Shared.Next(1, 14));
+
+            await connection.ExecuteAsync(@"
+                INSERT INTO Listings (
+                    Id, SellerId, CategoryId, Title, Slug, Description, Price, Currency,
+                    PriceType, Condition, Status, City, District, Province, Country,
+                    ContactPhone, ContactEmail, ShowPhone, ShowEmail, ViewCount,
+                    IsFeatured, FeaturedUntil, PublishedAt, CreatedAt)
+                VALUES (
+                    @Id, @SellerId, @CategoryId, @Title, @Slug, @Description, @Price, 'LKR',
+                    @PriceType, @Condition, @Status, @City, @District, 'Western Province', 'Sri Lanka',
+                    '0771234567', 'seller@marketplace.com', 1, 0, @ViewCount,
+                    @IsFeatured, @FeaturedUntil, @PublishedAt, @CreatedAt)",
+                new
+                {
+                    Id = listingId,
+                    SellerId = sellerId,
+                    CategoryId = categoryIds[category],
+                    Title = title,
+                    Slug = slug,
+                    Description = desc,
+                    Price = price,
+                    PriceType = (int)PriceType.Fixed,
+                    Condition = (int)ListingCondition.Used,
+                    Status = (int)ListingStatus.Active,
+                    City = city,
+                    District = district,
+                    ViewCount = Random.Shared.Next(10, 500),
+                    IsFeatured = featured,
+                    FeaturedUntil = featured ? featuredUntil : (DateTime?)null,
+                    PublishedAt = publishedAt,
+                    CreatedAt = publishedAt
+                });
+
+            await connection.ExecuteAsync(@"
+                INSERT INTO ListingImages (Id, ListingId, Url, AltText, SortOrder, IsPrimary, CreatedAt)
+                VALUES (@Id, @ListingId, @Url, @AltText, 0, 1, @CreatedAt)",
+                new
+                {
+                    Id = imageId,
+                    ListingId = listingId,
+                    Url = image,
+                    AltText = title,
+                    CreatedAt = publishedAt
+                });
         }
     }
 

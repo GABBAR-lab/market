@@ -28,5 +28,6 @@ public static class DependencyInjection
         using var scope = serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ProfileDbContext>();
         await context.Database.MigrateAsync();
+        await Persistence.Seeding.DatabaseSeeder.SeedAsync(context);
     }
 }

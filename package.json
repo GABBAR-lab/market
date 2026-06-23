@@ -1,0 +1,16 @@
+{
+  "name": "living-lanka-marketplace",
+  "private": true,
+  "description": "Living Lanka — full stack marketplace (frontend + 3 microservices)",
+  "scripts": {
+    "start": "powershell -ExecutionPolicy Bypass -File scripts/start-all.ps1",
+    "go": "npm start",
+    "stop": "powershell -ExecutionPolicy Bypass -File scripts/stop-all.ps1",
+    "health": "powershell -ExecutionPolicy Bypass -File scripts/health-check.ps1",
+    "ok": "npm run health",
+    "db:reset": "powershell -ExecutionPolicy Bypass -File scripts/reset-databases.ps1",
+    "reset": "npm run db:reset",
+    "db:docker": "docker compose up -d",
+    "sql": "npm run db:docker"
+  }
+}

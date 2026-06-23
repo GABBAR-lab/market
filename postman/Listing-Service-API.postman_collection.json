@@ -1,0 +1,414 @@
+{
+  "info": {
+    "name": "Listing Service API",
+    "description": "All endpoints for MarketPlace Listing Service (port 5003).\n\n**Setup:**\n1. Import `Listing-Service-Local.postman_environment.json`\n2. Run **Auth > Login (Identity)** to save token\n3. Run **Categories > Get All** to save categoryId\n4. Test listing CRUD flow",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Auth (Identity - for token)",
+      "item": [
+        {
+          "name": "Login (Admin)",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "if (pm.response.code === 200) {",
+                "  const j = pm.response.json();",
+                "  pm.environment.set('accessToken', j.accessToken);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@marketplace.com\",\n  \"password\": \"Admin@123\"\n}"
+            },
+            "url": "{{identityBaseUrl}}/api/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{listingBaseUrl}}/api/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Get All Categories",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "if (pm.response.code === 200) {",
+                "  const cats = pm.response.json();",
+                "  const mobiles = cats.find(c => c.slug === 'mobiles');",
+                "  if (mobiles) pm.environment.set('categoryId', mobiles.id);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{listingBaseUrl}}/api/categories"
+          }
+        },
+        {
+          "name": "Get Category By Id",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{listingBaseUrl}}/api/categories/{{categoryId}}"
+          }
+        },
+        {
+          "name": "Get Category By Slug",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{listingBaseUrl}}/api/categories/slug/mobiles"
+          }
+        },
+        {
+          "name": "Get Subcategories",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{listingBaseUrl}}/api/categories/{{parentCategoryId}}/subcategories"
+          }
+        },
+        {
+          "name": "Create Category (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Category\",\n  \"slug\": \"test-category\",\n  \"description\": \"Test category\",\n  \"iconUrl\": \"/icons/test.svg\",\n  \"sortOrder\": 99\n}"
+            },
+            "url": "{{listingBaseUrl}}/api/categories"
+          }
+        },
+        {
+          "name": "Update Category (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Category\",\n  \"slug\": \"test-category\",\n  \"description\": \"Updated\",\n  \"iconUrl\": \"/icons/test.svg\",\n  \"sortOrder\": 99,\n  \"isActive\": true\n}"
+            },
+            "url": "{{listingBaseUrl}}/api/categories/{{categoryId}}"
+          }
+        },
+        {
+          "name": "Add Category Attribute (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"color\",\n  \"displayName\": \"Color\",\n  \"fieldType\": \"Select\",\n  \"options\": \"[\\\"Red\\\",\\\"Blue\\\",\\\"Black\\\"]\",\n  \"isRequired\": false,\n  \"isFilterable\": true,\n  \"sortOrder\": 1\n}"
+            },
+            "url": "{{listingBaseUrl}}/api/categories/{{categoryId}}/attributes"
+          }
+        },
+        {
+          "name": "Delete Category (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{listingBaseUrl}}/api/categories/{{categoryId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Locations",
+      "item": [
+        {
+          "name": "Get All Locations",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{listingBaseUrl}}/api/locations"
+          }
+        },
+        {
+          "name": "Get Location By Id",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{listingBaseUrl}}/api/locations/{{locationId}}"
+          }
+        },
+        {
+          "name": "Get Location By Slug",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{listingBaseUrl}}/api/locations/slug/sri-lanka"
+          }
+        },
+        {
+          "name": "Get Locations By Type",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{listingBaseUrl}}/api/locations/type/Province"
+          }
+        },
+        {
+          "name": "Get Location Children",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{listingBaseUrl}}/api/locations/{{parentLocationId}}/children"
+          }
+        },
+        {
+          "name": "Create Location (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test City\",\n  \"slug\": \"test-city\",\n  \"type\": \"City\",\n  \"parentLocationId\": null,\n  \"sortOrder\": 1\n}"
+            },
+            "url": "{{listingBaseUrl}}/api/locations"
+          }
+        },
+        {
+          "name": "Update Location (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test City\",\n  \"slug\": \"test-city\",\n  \"sortOrder\": 1,\n  \"isActive\": true\n}"
+            },
+            "url": "{{listingBaseUrl}}/api/locations/{{locationId}}"
+          }
+        },
+        {
+          "name": "Delete Location (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{listingBaseUrl}}/api/locations/{{locationId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Listings",
+      "item": [
+        {
+          "name": "Search Listings",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{listingBaseUrl}}/api/listings?page=1&pageSize=20&sortBy=newest",
+              "host": ["{{listingBaseUrl}}"],
+              "path": ["api", "listings"],
+              "query": [
+                { "key": "searchTerm", "value": "iphone", "disabled": true },
+                { "key": "categoryId", "value": "{{categoryId}}", "disabled": true },
+                { "key": "locationId", "value": "{{locationId}}", "disabled": true },
+                { "key": "city", "value": "Colombo", "disabled": true },
+                { "key": "minPrice", "value": "0", "disabled": true },
+                { "key": "maxPrice", "value": "1000000", "disabled": true },
+                { "key": "status", "value": "Active", "disabled": true },
+                { "key": "isFeatured", "value": "true", "disabled": true },
+                { "key": "sellerId", "value": "", "disabled": true },
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" },
+                { "key": "sortBy", "value": "newest", "description": "newest|oldest|price_asc|price_desc|views" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Featured Listings",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{listingBaseUrl}}/api/listings/featured?limit=10"
+          }
+        },
+        {
+          "name": "Get My Listings",
+          "request": {
+            "method": "GET",
+            "url": "{{listingBaseUrl}}/api/listings/me"
+          }
+        },
+        {
+          "name": "Get Listing By Id",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{listingBaseUrl}}/api/listings/{{listingId}}"
+          }
+        },
+        {
+          "name": "Get Listing By Slug",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{listingBaseUrl}}/api/listings/slug/iphone-14-pro-colombo"
+          }
+        },
+        {
+          "name": "Create Listing",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "if (pm.response.code === 201) {",
+                "  pm.environment.set('listingId', pm.response.json().id);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryId\": \"{{categoryId}}\",\n  \"title\": \"iPhone 14 Pro\",\n  \"slug\": \"iphone-14-pro-colombo\",\n  \"description\": \"Brand new sealed box phone\",\n  \"price\": 350000,\n  \"currency\": \"LKR\",\n  \"priceType\": \"Negotiable\",\n  \"condition\": \"BrandNew\",\n  \"locationId\": null,\n  \"city\": \"Colombo\",\n  \"district\": \"Colombo\",\n  \"province\": \"Western Province\",\n  \"country\": \"Sri Lanka\",\n  \"contactPhone\": \"0771234567\",\n  \"contactEmail\": null,\n  \"showPhone\": true,\n  \"showEmail\": false,\n  \"expiresAt\": \"2026-12-31T00:00:00Z\",\n  \"images\": [\n    {\n      \"url\": \"https://example.com/phone.jpg\",\n      \"thumbnailUrl\": null,\n      \"altText\": \"iPhone front\",\n      \"sortOrder\": 1,\n      \"isPrimary\": true\n    }\n  ],\n  \"attributes\": []\n}"
+            },
+            "url": "{{listingBaseUrl}}/api/listings"
+          }
+        },
+        {
+          "name": "Update Listing",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryId\": \"{{categoryId}}\",\n  \"title\": \"iPhone 14 Pro Max\",\n  \"slug\": \"iphone-14-pro-colombo\",\n  \"description\": \"Updated description\",\n  \"price\": 380000,\n  \"currency\": \"LKR\",\n  \"priceType\": \"Negotiable\",\n  \"condition\": \"BrandNew\",\n  \"locationId\": null,\n  \"city\": \"Colombo\",\n  \"district\": \"Colombo\",\n  \"province\": \"Western Province\",\n  \"country\": \"Sri Lanka\",\n  \"contactPhone\": \"0771234567\",\n  \"contactEmail\": null,\n  \"showPhone\": true,\n  \"showEmail\": false,\n  \"expiresAt\": \"2026-12-31T00:00:00Z\"\n}"
+            },
+            "url": "{{listingBaseUrl}}/api/listings/{{listingId}}"
+          }
+        },
+        {
+          "name": "Delete Listing",
+          "request": {
+            "method": "DELETE",
+            "url": "{{listingBaseUrl}}/api/listings/{{listingId}}"
+          }
+        },
+        {
+          "name": "Submit For Review",
+          "request": {
+            "method": "POST",
+            "url": "{{listingBaseUrl}}/api/listings/{{listingId}}/submit"
+          }
+        },
+        {
+          "name": "Publish Listing (Admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{listingBaseUrl}}/api/listings/{{listingId}}/publish"
+          }
+        },
+        {
+          "name": "Reject Listing (Admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{listingBaseUrl}}/api/listings/{{listingId}}/reject"
+          }
+        },
+        {
+          "name": "Mark As Sold",
+          "request": {
+            "method": "POST",
+            "url": "{{listingBaseUrl}}/api/listings/{{listingId}}/sold"
+          }
+        },
+        {
+          "name": "Feature Listing (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"featuredUntil\": \"2026-12-31T00:00:00Z\"\n}"
+            },
+            "url": "{{listingBaseUrl}}/api/listings/{{listingId}}/feature"
+          }
+        },
+        {
+          "name": "Remove Featured (Admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{listingBaseUrl}}/api/listings/{{listingId}}/unfeature"
+          }
+        },
+        {
+          "name": "Add Listing Image",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "if (pm.response.code === 200) {",
+                "  pm.environment.set('imageId', pm.response.json().id);",
+                "}"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://example.com/phone2.jpg\",\n  \"thumbnailUrl\": null,\n  \"altText\": \"Side view\",\n  \"sortOrder\": 2,\n  \"isPrimary\": false\n}"
+            },
+            "url": "{{listingBaseUrl}}/api/listings/{{listingId}}/images"
+          }
+        },
+        {
+          "name": "Remove Listing Image",
+          "request": {
+            "method": "DELETE",
+            "url": "{{listingBaseUrl}}/api/listings/{{listingId}}/images/{{imageId}}"
+          }
+        },
+        {
+          "name": "Increment View Count",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "url": "{{listingBaseUrl}}/api/listings/{{listingId}}/view"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply font-sans text-gray-800 antialiased;
+  }
+}
+
+@layer components {
+  .section-container {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .nav-link {
+    @apply flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-maroon-800 transition-all hover:bg-maroon-50;
+  }
+
+  .nav-link-active {
+    @apply bg-maroon-100 text-maroon-900 shadow-sm;
+  }
+
+  .premium-card {
+    @apply rounded-2xl border border-gray-100 bg-white shadow-xl ring-1 ring-black/5 backdrop-blur-sm;
+  }
+
+  .glass-panel {
+    @apply rounded-2xl border border-white/20 bg-white/10 shadow-2xl backdrop-blur-md;
+  }
+
+  .heading-display {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

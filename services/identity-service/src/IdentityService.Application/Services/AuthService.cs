@@ -40,12 +40,19 @@ public class AuthService : IAuthService
             request.PhoneNumber);
 
         var buyerRole = await _roleRepository.GetByNameAsync("Buyer");
+        var sellerRole = await _roleRepository.GetByNameAsync("Seller");
         var roleNames = new List<string>();
 
         if (buyerRole is not null)
         {
             user.AssignRole(buyerRole);
             roleNames.Add(buyerRole.Name);
+        }
+
+        if (sellerRole is not null)
+        {
+            user.AssignRole(sellerRole);
+            roleNames.Add(sellerRole.Name);
         }
 
         var accessToken = _tokenService.GenerateAccessToken(user, roleNames);
