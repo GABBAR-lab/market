@@ -43,6 +43,20 @@ public class User : AuditableEntity
         };
     }
 
+    /// <summary>Seed/demo users with fixed IDs shared across microservices.</summary>
+    public static User CreateWithId(
+        Guid id,
+        string email,
+        string passwordHash,
+        string firstName,
+        string lastName,
+        string? phoneNumber = null)
+    {
+        var user = Create(email, passwordHash, firstName, lastName, phoneNumber);
+        user.OverrideId(id);
+        return user;
+    }
+
     public void VerifyEmail()
     {
         EmailVerified = true;

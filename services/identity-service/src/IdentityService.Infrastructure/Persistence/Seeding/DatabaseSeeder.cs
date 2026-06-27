@@ -26,23 +26,23 @@ public static class DatabaseSeeder
 
         await context.Roles.AddRangeAsync(adminRole, sellerRole, buyerRole);
 
-        var adminUser = User.Create(
+        var adminUser = User.CreateWithId(
+            SeedUserIds.Admin,
             "admin@marketplace.com",
             passwordHasher.Hash("Admin@123"),
             "System",
             "Admin");
-        adminUser.OverrideId(SeedUserIds.Admin);
         adminUser.VerifyEmail();
         adminUser.AssignRole(adminRole);
         adminUser.AssignRole(sellerRole);
 
-        var sellerUser = User.Create(
+        var sellerUser = User.CreateWithId(
+            SeedUserIds.Seller,
             "seller@marketplace.com",
             passwordHasher.Hash("Seller@123"),
             "Demo",
             "Seller",
             "0771234567");
-        sellerUser.OverrideId(SeedUserIds.Seller);
         sellerUser.VerifyEmail();
         sellerUser.AssignRole(sellerRole);
 
@@ -58,20 +58,21 @@ public static class DatabaseSeeder
             return;
         }
 
-        var usersWithoutSeller = await context.Users
-            .Include(u => u.UserRoles)
+        var userIdsWithoutSeller = await context.Users
+            .AsNoTracking()
             .Where(u => u.Status != UserStatus.Deleted)
-            .Where(u => !u.UserRoles.Any(ur => ur.RoleId == sellerRole.Id))
+            .Where(u => !context.UserRoles.Any(ur => ur.UserId == u.Id && ur.RoleId == sellerRole.Id))
+            .Select(u => u.Id)
             .ToListAsync();
 
-        if (usersWithoutSeller.Count == 0)
+        if (userIdsWithoutSeller.Count == 0)
         {
             return;
         }
 
-        foreach (var user in usersWithoutSeller)
+        foreach (var userId in userIdsWithoutSeller)
         {
-            user.AssignRole(sellerRole);
+            await context.UserRoles.AddAsync(UserRole.Assign(userId, sellerRole.Id));
         }
 
         await context.SaveChangesAsync();

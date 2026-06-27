@@ -4,14 +4,21 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   CategoryResponse,
+  CategoryTreeNodeResponse,
   CreateListingRequest,
   ListingResponse,
   ListingSearchParams,
   LocationResponse,
   PagedResult,
+  PaymentCalculationRequest,
+  PaymentCalculationResponse,
+  CompletePaymentRequest,
+  PaymentResponse,
+  CategoryPricingResponse,
+  ListingDetailResponse,
 } from '../models/api.models';
-import { Category, PropertyListing, SearchFilters } from '../models/marketplace.models';
-import { mapCategory, mapListing } from '../utils/mappers';
+import { Category, CategoryTreeNode, PropertyListing, SearchFilters } from '../models/marketplace.models';
+import { mapCategory, mapCategoryTreeNode, mapListing, mapListingDetail } from '../utils/mappers';
 
 @Injectable({ providedIn: 'root' })
 export class ListingApiService {
@@ -24,6 +31,12 @@ export class ListingApiService {
     return this.http
       .get<CategoryResponse[]>(this.categoriesBase)
       .pipe(map((items) => items.filter((c) => c.isActive).map(mapCategory)));
+  }
+
+  getCategoryTree(): Observable<CategoryTreeNode[]> {
+    return this.http
+      .get<CategoryTreeNodeResponse[]>(`${this.categoriesBase}/tree`)
+      .pipe(map((items) => items.map(mapCategoryTreeNode)));
   }
 
   getCategoryBySlug(slug: string): Observable<CategoryResponse> {
@@ -52,8 +65,12 @@ export class ListingApiService {
 
   getListingById(id: string): Observable<PropertyListing> {
     return this.http
-      .get<ListingResponse>(`${this.listingsBase}/${id}`)
-      .pipe(map(mapListing));
+      .get<ListingDetailResponse>(`${this.listingsBase}/${id}`)
+      .pipe(map(mapListingDetail));
+  }
+
+  getListingDetail(id: string): Observable<PropertyListing> {
+    return this.getListingById(id);
   }
 
   getListingBySlug(slug: string): Observable<PropertyListing> {
@@ -70,6 +87,22 @@ export class ListingApiService {
 
   createListing(request: CreateListingRequest): Observable<ListingResponse> {
     return this.http.post<ListingResponse>(this.listingsBase, request);
+  }
+
+  calculatePayment(request: PaymentCalculationRequest): Observable<PaymentCalculationResponse> {
+    return this.http.post<PaymentCalculationResponse>(`${environment.apiBaseUrl}/payments/calculate`, request);
+  }
+
+  completePayment(request: CompletePaymentRequest): Observable<PaymentResponse> {
+    return this.http.post<PaymentResponse>(`${environment.apiBaseUrl}/payments/complete`, request);
+  }
+
+  getCategoryPricing(): Observable<CategoryPricingResponse[]> {
+    return this.http.get<CategoryPricingResponse[]>(`${environment.apiBaseUrl}/admin/categories/pricing`);
+  }
+
+  updateCategoryPricing(id: string, body: { perDayPriceSale: number; perDayPriceBuy: number; perDayPriceRent: number }): Observable<CategoryPricingResponse> {
+    return this.http.put<CategoryPricingResponse>(`${environment.apiBaseUrl}/admin/categories/${id}/pricing`, body);
   }
 
   submitForReview(id: string): Observable<ListingResponse> {
@@ -100,13 +133,15 @@ export class ListingApiService {
     const p: ListingSearchParams = {
       page,
       pageSize,
-      sortBy: 'newest',
+      sortBy: filters.sortBy ?? 'newest',
       status: 'Active',
     };
 
     if (filters.query) p.searchTerm = filters.query;
     if (filters.categoryId) p.categoryId = filters.categoryId;
-    if (filters.city || filters.location) p.city = filters.city ?? filters.location;
+    if (filters.city || filters.location || filters.province) {
+      p.city = filters.city ?? filters.location ?? filters.province;
+    }
     if (filters.minPrice) p.minPrice = filters.minPrice;
     if (filters.maxPrice) p.maxPrice = filters.maxPrice;
     if (filters.listingType === 'rent') p.searchTerm = (p.searchTerm ?? '') + ' rent';

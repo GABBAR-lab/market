@@ -14,6 +14,8 @@ public static class DependencyInjection
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<IListingRepository, ListingRepository>();
         services.AddScoped<ILocationRepository, LocationRepository>();
+        services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<IAppSettingsRepository, AppSettingsRepository>();
         services.AddScoped<DatabaseInitializer>();
 
         return services;

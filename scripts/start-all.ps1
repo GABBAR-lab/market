@@ -10,6 +10,10 @@ Write-Host "  Living Lanka - Starting Full Stack" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
+Write-Host "Stopping any services already on ports 5001-5003 / 4200..." -ForegroundColor Yellow
+& (Join-Path $PSScriptRoot "stop-all.ps1") | Out-Null
+Write-Host ""
+
 if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
     Write-Host "ERROR: .NET SDK not found. Install from https://dotnet.microsoft.com/download" -ForegroundColor Red
     exit 1

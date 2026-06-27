@@ -6,6 +6,8 @@
     "start": "powershell -ExecutionPolicy Bypass -File scripts/start-all.ps1",
     "go": "npm start",
     "stop": "powershell -ExecutionPolicy Bypass -File scripts/stop-all.ps1",
+    "restart": "npm run stop && npm start",
+    "build:services": "npm run stop && dotnet build services/identity-service/src/IdentityService.Api/IdentityService.Api.csproj && dotnet build services/listing-service/src/ListingService.Api/ListingService.Api.csproj && dotnet build services/profile-service/src/ProfileService.Api/ProfileService.Api.csproj",
     "health": "powershell -ExecutionPolicy Bypass -File scripts/health-check.ps1",
     "ok": "npm run health",
     "db:reset": "powershell -ExecutionPolicy Bypass -File scripts/reset-databases.ps1",

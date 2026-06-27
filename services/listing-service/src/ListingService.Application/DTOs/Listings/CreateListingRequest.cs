@@ -9,6 +9,11 @@ public record CreateListingRequest(
     string Currency,
     string PriceType,
     string Condition,
+    string ListingPurpose,
+    string MobilePhone,
+    string WhatsAppPhone,
+    string? Address,
+    int AdDurationDays,
     Guid? LocationId,
     string? City,
     string? District,
@@ -18,17 +23,8 @@ public record CreateListingRequest(
     string? ContactEmail,
     bool ShowPhone,
     bool ShowEmail,
+    double? Latitude,
+    double? Longitude,
     DateTime? ExpiresAt,
     IReadOnlyList<CreateListingImageRequest>? Images,
     IReadOnlyList<SetListingAttributeRequest>? Attributes);
-
-public record CreateListingImageRequest(
-    string Url,
-    string? ThumbnailUrl,
-    string? AltText,
-    int SortOrder,
-    bool IsPrimary);
-
-public record SetListingAttributeRequest(
-    Guid CategoryAttributeId,
-    string Value);

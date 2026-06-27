@@ -82,6 +82,20 @@ public class CategoryService : ICategoryService
         return Result<IReadOnlyList<CategoryResponse>>.Success(responses);
     }
 
+    public async Task<Result<IReadOnlyList<CategoryTreeNodeResponse>>> GetTreeAsync()
+    {
+        var categories = await _categoryRepository.GetAllAsync();
+        var roots = categories.Where(c => c.ParentCategoryId is null).OrderBy(c => c.SortOrder).ToList();
+        var responses = new List<CategoryTreeNodeResponse>();
+
+        foreach (var root in roots)
+        {
+            responses.Add(await MapToTreeNodeAsync(root, categories));
+        }
+
+        return Result<IReadOnlyList<CategoryTreeNodeResponse>>.Success(responses);
+    }
+
     public async Task<Result<IReadOnlyList<CategoryResponse>>> GetSubCategoriesAsync(Guid parentCategoryId)
     {
         var subCategories = await _categoryRepository.GetSubCategoriesAsync(parentCategoryId);
@@ -189,6 +203,53 @@ public class CategoryService : ICategoryService
             category.Attributes.Select(MapAttribute).ToList(),
             category.CreatedAt,
             category.UpdatedAt);
+    }
+
+    private async Task<CategoryTreeNodeResponse> MapToTreeNodeAsync(
+        Category category,
+        IReadOnlyList<Category> allCategories)
+    {
+        var count = await _categoryRepository.GetListingCountAsync(category.Id);
+        var subCategories = allCategories
+            .Where(c => c.ParentCategoryId == category.Id)
+            .OrderBy(c => c.SortOrder)
+            .ToList();
+
+        var subNodes = new List<CategoryTreeNodeResponse>();
+        foreach (var sub in subCategories)
+        {
+            var subCount = await _categoryRepository.GetListingCountAsync(sub.Id);
+            subNodes.Add(new CategoryTreeNodeResponse(
+                sub.Id,
+                sub.Name,
+                sub.Slug,
+                sub.IconUrl,
+                subCount,
+                ExtractSearchTerm(sub.Description),
+                []));
+        }
+
+        return new CategoryTreeNodeResponse(
+            category.Id,
+            category.Name,
+            category.Slug,
+            category.IconUrl,
+            count,
+            ExtractSearchTerm(category.Description),
+            subNodes);
+    }
+
+    private static string? ExtractSearchTerm(string? description)
+    {
+        if (string.IsNullOrWhiteSpace(description))
+        {
+            return null;
+        }
+
+        const string prefix = "search:";
+        return description.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+            ? description[prefix.Length..].Trim()
+            : null;
     }
 
     private static CategoryResponse MapToResponse(Category category, int listingCount) => new(

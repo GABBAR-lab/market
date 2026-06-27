@@ -14,6 +14,9 @@ public class Category : AuditableEntity
     public Guid? ParentCategoryId { get; private set; }
     public int SortOrder { get; private set; }
     public bool IsActive { get; private set; } = true;
+    public decimal PerDayPriceSale { get; private set; } = 50;
+    public decimal PerDayPriceBuy { get; private set; } = 30;
+    public decimal PerDayPriceRent { get; private set; } = 40;
 
     public Category? ParentCategory { get; private set; }
     public IReadOnlyCollection<Category> SubCategories => _subCategories.AsReadOnly();
@@ -95,6 +98,9 @@ public class Category : AuditableEntity
         Guid? parentCategoryId,
         int sortOrder,
         bool isActive,
+        decimal perDayPriceSale,
+        decimal perDayPriceBuy,
+        decimal perDayPriceRent,
         DateTime createdAt,
         DateTime? updatedAt)
     {
@@ -108,6 +114,9 @@ public class Category : AuditableEntity
             ParentCategoryId = parentCategoryId,
             SortOrder = sortOrder,
             IsActive = isActive,
+            PerDayPriceSale = perDayPriceSale,
+            PerDayPriceBuy = perDayPriceBuy,
+            PerDayPriceRent = perDayPriceRent,
             CreatedAt = createdAt,
             UpdatedAt = updatedAt
         };

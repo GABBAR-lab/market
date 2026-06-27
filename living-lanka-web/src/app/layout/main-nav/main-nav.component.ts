@@ -1,51 +1,38 @@
-import { Component, inject, Input, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { NavItem } from '../../core/models/marketplace.models';
 import { ListingApiService } from '../../core/services/listing-api.service';
+import { NavItem } from '../../core/models/marketplace.models';
+import { CategoryIconComponent } from '../../shared/components/category-icon/category-icon.component';
+import { iconKeyFromCategory } from '../../core/data/category-icons';
 
 @Component({
   selector: 'app-main-nav',
-  imports: [RouterLink],
+  imports: [RouterLink, CategoryIconComponent],
   template: `
-    <nav class="border-b border-gray-200 bg-gradient-to-r from-base-200 to-white">
+    <nav class="border-b border-gray-200 bg-white">
       <div class="section-container">
-        <ul class="hidden items-center gap-1 py-2 lg:flex">
-          <li>
-            <a routerLink="/" class="nav-link font-semibold">Home</a>
-          </li>
-          @for (item of navItems(); track item.slug) {
-            <li class="dropdown dropdown-hover">
-              <a
-                [routerLink]="['/category', item.slug]"
-                tabindex="0"
-                class="nav-link"
-                [class.nav-link-active]="item.slug === activeSlug"
-              >
-                {{ item.label }}
-                @if (item.children?.length) {
-                  <svg class="h-3.5 w-3.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                  </svg>
-                }
-              </a>
-              @if (item.children?.length) {
-                <ul tabindex="0" class="dropdown-content menu z-50 mt-0 w-52 rounded-box bg-base-100 p-2 shadow-xl ring-1 ring-black/5">
-                  @for (child of item.children; track child.slug) {
-                    <li><a [routerLink]="['/category', child.slug]">{{ child.label }}</a></li>
-                  }
-                </ul>
-              }
-            </li>
-          }
-        </ul>
-
-        <div class="flex gap-2 overflow-x-auto py-2 lg:hidden">
-          <a routerLink="/" class="whitespace-nowrap rounded-full bg-maroon-800 px-4 py-1.5 text-sm font-medium text-white shadow-sm">Home</a>
+        <div class="flex gap-1 overflow-x-auto py-2">
+          <a
+            routerLink="/categories"
+            class="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold text-[#0074ba] hover:bg-teal-50"
+          >
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            Categories
+          </a>
+          <a
+            routerLink="/all-ads"
+            class="whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold text-gray-700 hover:bg-teal-50 hover:text-teal-700"
+          >
+            All Ads
+          </a>
           @for (item of navItems(); track item.slug) {
             <a
               [routerLink]="['/category', item.slug]"
-              class="whitespace-nowrap rounded-full border border-gray-200 bg-white px-4 py-1.5 text-sm font-medium text-maroon-800 shadow-sm"
+              class="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700"
             >
+              <app-category-icon [iconKey]="item.iconKey" [slug]="item.slug" size="sm" />
               {{ item.label }}
             </a>
           }
@@ -55,20 +42,18 @@ import { ListingApiService } from '../../core/services/listing-api.service';
   `,
 })
 export class MainNavComponent implements OnInit {
-  @Input() activeSlug = 'all';
-
   private readonly api = inject(ListingApiService);
-  readonly navItems = signal<NavItem[]>([
-    { label: 'All Ads', slug: 'all' },
-  ]);
+  readonly navItems = signal<(NavItem & { iconKey: string })[]>([]);
 
   ngOnInit(): void {
     this.api.getCategories().subscribe((cats) => {
-      const items: NavItem[] = [
-        { label: 'All Ads', slug: 'all' },
-        ...cats.slice(0, 8).map((c) => ({ label: c.title, slug: c.slug })),
-      ];
-      this.navItems.set(items);
+      this.navItems.set(
+        cats.slice(0, 10).map((c) => ({
+          label: c.title,
+          slug: c.slug,
+          iconKey: iconKeyFromCategory(c.slug, c.iconUrl ?? c.icon),
+        }))
+      );
     });
   }
 }

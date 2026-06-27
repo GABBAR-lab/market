@@ -22,4 +22,14 @@ public class UserRole : BaseEntity
             RoleId = role.Id
         };
     }
+
+    /// <summary>Seed/migration helper — assign role without loading the full user graph.</summary>
+    public static UserRole Assign(Guid userId, Guid roleId)
+    {
+        return new UserRole
+        {
+            UserId = userId,
+            RoleId = roleId
+        };
+    }
 }

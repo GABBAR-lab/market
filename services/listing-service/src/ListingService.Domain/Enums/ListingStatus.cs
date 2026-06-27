@@ -8,5 +8,6 @@ public enum ListingStatus
     Sold = 3,
     Expired = 4,
     Rejected = 5,
-    Deleted = 6
+    Deleted = 6,
+    PendingPayment = 7
 }

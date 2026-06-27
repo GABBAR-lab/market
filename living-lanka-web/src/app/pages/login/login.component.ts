@@ -14,11 +14,7 @@ import { AuthService } from '../../core/services/auth.service';
 
       <div class="premium-card relative w-full max-w-md p-8 sm:p-10">
         <div class="mb-6 text-center">
-          <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-maroon-800 to-maroon-950 shadow-lg">
-            <svg class="h-7 w-7 text-gold-400" viewBox="0 0 48 48" fill="currentColor">
-              <path d="M24 4L8 18h4v20h24V18h4L24 4z" />
-            </svg>
-          </div>
+          <img src="/images/living-lanka-logo.png" alt="Living Lanka" class="mx-auto mb-4 h-20 w-auto object-contain" />
           <h1 class="text-2xl font-bold text-maroon-900">Welcome Back</h1>
           <p class="mt-1 text-sm text-gray-500">Sign in to manage your ads and profile</p>
         </div>
@@ -30,25 +26,11 @@ import { AuthService } from '../../core/services/auth.service';
         <form class="space-y-4" (ngSubmit)="onSubmit()">
           <div class="form-control">
             <label class="label"><span class="label-text font-medium">Email</span></label>
-            <input
-              type="email"
-              [(ngModel)]="email"
-              name="email"
-              required
-              class="input input-bordered w-full"
-              placeholder="you@email.com"
-            />
+            <input type="email" [(ngModel)]="email" name="email" required class="input input-bordered w-full" placeholder="you@email.com" />
           </div>
           <div class="form-control">
             <label class="label"><span class="label-text font-medium">Password</span></label>
-            <input
-              type="password"
-              [(ngModel)]="password"
-              name="password"
-              required
-              class="input input-bordered w-full"
-              placeholder="••••••••"
-            />
+            <input type="password" [(ngModel)]="password" name="password" required class="input input-bordered w-full" placeholder="••••••••" />
           </div>
           <button
             type="submit"
@@ -62,11 +44,6 @@ import { AuthService } from '../../core/services/auth.service';
             }
           </button>
         </form>
-
-        <div class="divider my-6 text-xs text-gray-400">TEST ACCOUNT</div>
-        <p class="text-center text-xs text-gray-500">
-          Admin: <code class="rounded bg-base-200 px-1">admin@marketplace.com</code> / <code class="rounded bg-base-200 px-1">Admin@123</code>
-        </p>
 
         <p class="mt-6 text-center text-sm text-gray-500">
           Don't have an account?

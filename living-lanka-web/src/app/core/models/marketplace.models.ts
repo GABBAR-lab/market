@@ -3,8 +3,19 @@ export interface Category {
   title: string;
   subtitle?: string;
   icon: string;
+  iconUrl?: string;
   slug: string;
   adCount?: number;
+}
+
+export interface CategoryTreeNode {
+  id: string;
+  name: string;
+  slug: string;
+  iconUrl?: string;
+  listingCount: number;
+  searchTerm?: string;
+  subCategories: CategoryTreeNode[];
 }
 
 export interface NavItem {
@@ -21,6 +32,7 @@ export interface PropertyListing {
   currency: string;
   location: string;
   imageUrl: string;
+  imageUrls?: string[];
   category: string;
   categoryId?: string;
   description?: string;
@@ -37,6 +49,9 @@ export interface PropertyListing {
   showEmail?: boolean;
   priceType?: string;
   condition?: string;
+  latitude?: number;
+  longitude?: number;
+  publishedAt?: string;
   bedrooms?: number;
   bathrooms?: number;
   areaSqFt?: number;
@@ -45,14 +60,16 @@ export interface PropertyListing {
 export interface SearchFilters {
   query?: string;
   location?: string;
+  province?: string;
   propertyType?: string;
   category?: string;
   categoryId?: string;
   posterType?: string;
-  listingType?: 'sale' | 'rent';
+  listingType?: 'sale' | 'rent' | 'buy';
   minPrice?: number;
   maxPrice?: number;
   city?: string;
+  sortBy?: 'newest' | 'oldest' | 'price_asc' | 'price_desc';
 }
 
 export interface AuthUser {

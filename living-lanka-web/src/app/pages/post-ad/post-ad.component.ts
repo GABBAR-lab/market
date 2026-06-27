@@ -1,200 +1,346 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ListingApiService } from '../../core/services/listing-api.service';
+import { ImageUploadService } from '../../core/services/image-upload.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Category } from '../../core/models/marketplace.models';
-import { LocationResponse } from '../../core/models/api.models';
+import { PaymentCalculationResponse } from '../../core/models/api.models';
 import { slugify } from '../../core/utils/mappers';
+import {
+  LISTING_PURPOSES,
+  ListingPurpose,
+  SRI_LANKA_PROVINCES,
+} from '../../core/data/sri-lanka-locations';
+import { AD_DURATION_PRESETS, POST_AD_SUBCATEGORIES, PostAdSubCategory } from '../../core/data/post-ad-subcategories';
+import {
+  formatSlMobileDisplay,
+  isValidSlMobile,
+  validateAdTitle,
+  validateCardNumber,
+  validateCvv,
+  validateDescription,
+  validateImageCount,
+} from '../../core/utils/post-ad.validators';
 
 @Component({
   selector: 'app-post-ad',
-  imports: [RouterLink, FormsModule],
-  template: `
-    <div class="bg-gradient-to-b from-maroon-950 to-maroon-900 py-12 text-white">
-      <div class="section-container">
-        <h1 class="text-3xl font-bold">Post Your Free Ad</h1>
-        <p class="mt-2 text-white/70">Reach thousands of buyers across Sri Lanka</p>
-      </div>
-    </div>
-
-    <div class="section-container py-10">
-      @if (error()) {
-        <div class="alert alert-error mb-6 max-w-3xl">{{ error() }}</div>
-      }
-      @if (success()) {
-        <div class="alert alert-success mb-6 max-w-3xl">{{ success() }}</div>
-      }
-
-      <form class="premium-card mx-auto max-w-3xl space-y-5 p-6 sm:p-10" (ngSubmit)="onSubmit()">
-        <div class="form-control">
-          <label class="label"><span class="label-text font-semibold">Ad Title *</span></label>
-          <input type="text" [(ngModel)]="title" name="title" required class="input input-bordered w-full" placeholder="e.g. 3 Bedroom House in Colombo 05" />
-        </div>
-
-        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <div class="form-control">
-            <label class="label"><span class="label-text font-semibold">Category *</span></label>
-            <select [(ngModel)]="categoryId" name="categoryId" required class="select select-bordered w-full">
-              <option value="">Select category</option>
-              @for (cat of categories(); track cat.id) {
-                <option [value]="cat.id">{{ cat.title }}</option>
-              }
-            </select>
-          </div>
-          <div class="form-control">
-            <label class="label"><span class="label-text font-semibold">Condition *</span></label>
-            <select [(ngModel)]="condition" name="condition" class="select select-bordered w-full">
-              <option value="New">New</option>
-              <option value="Used">Used</option>
-              <option value="Refurbished">Refurbished</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
-          <div class="form-control">
-            <label class="label"><span class="label-text font-semibold">Price (LKR)</span></label>
-            <input type="number" [(ngModel)]="price" name="price" class="input input-bordered w-full" placeholder="0" />
-          </div>
-          <div class="form-control">
-            <label class="label"><span class="label-text font-semibold">Price Type</span></label>
-            <select [(ngModel)]="priceType" name="priceType" class="select select-bordered w-full">
-              <option value="Fixed">Fixed</option>
-              <option value="Negotiable">Negotiable</option>
-              <option value="Free">Free</option>
-            </select>
-          </div>
-          <div class="form-control">
-            <label class="label"><span class="label-text font-semibold">City</span></label>
-            <select [(ngModel)]="city" name="city" class="select select-bordered w-full">
-              <option value="">Select city</option>
-              @for (loc of cities(); track loc.id) {
-                <option [value]="loc.name">{{ loc.name }}</option>
-              }
-            </select>
-          </div>
-        </div>
-
-        <div class="form-control">
-          <label class="label"><span class="label-text font-semibold">Description *</span></label>
-          <textarea [(ngModel)]="description" name="description" required class="textarea textarea-bordered h-36 w-full" placeholder="Describe your item in detail..."></textarea>
-        </div>
-
-        <div class="form-control">
-          <label class="label"><span class="label-text font-semibold">Image URL</span></label>
-          <input type="url" [(ngModel)]="imageUrl" name="imageUrl" class="input input-bordered w-full" placeholder="https://..." />
-        </div>
-
-        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <div class="form-control">
-            <label class="label"><span class="label-text font-semibold">Contact Phone</span></label>
-            <input type="tel" [(ngModel)]="contactPhone" name="phone" class="input input-bordered w-full" />
-          </div>
-          <div class="form-control">
-            <label class="label"><span class="label-text font-semibold">Contact Email</span></label>
-            <input type="email" [(ngModel)]="contactEmail" name="email" class="input input-bordered w-full" />
-          </div>
-        </div>
-
-        <div class="flex gap-4">
-          <label class="label cursor-pointer gap-2">
-            <input type="checkbox" [(ngModel)]="showPhone" name="showPhone" class="checkbox checkbox-sm" />
-            <span class="label-text">Show phone</span>
-          </label>
-          <label class="label cursor-pointer gap-2">
-            <input type="checkbox" [(ngModel)]="showEmail" name="showEmail" class="checkbox checkbox-sm" />
-            <span class="label-text">Show email</span>
-          </label>
-        </div>
-
-        <div class="rounded-xl bg-blue-50 p-4 text-sm text-blue-900">
-          <strong>Tip:</strong> After registering, logout and login once if posting fails.
-        </div>
-
-        <div class="flex flex-col gap-3 pt-2 sm:flex-row">
-          <button type="submit" class="btn flex-1 bg-gradient-to-r from-maroon-800 to-maroon-950 text-white" [disabled]="submitting()">
-            @if (submitting()) { <span class="loading loading-spinner loading-sm"></span> }
-            Publish Ad
-          </button>
-          <a routerLink="/" class="btn btn-ghost flex-1">Cancel</a>
-        </div>
-      </form>
-    </div>
-  `,
+  imports: [RouterLink, FormsModule, DecimalPipe],
+  templateUrl: './post-ad.component.html',
 })
 export class PostAdComponent implements OnInit {
   readonly auth = inject(AuthService);
   private readonly api = inject(ListingApiService);
+  private readonly images = inject(ImageUploadService);
   private readonly router = inject(Router);
 
-  readonly categories = signal<Category[]>([]);
-  readonly cities = signal<LocationResponse[]>([]);
-  readonly error = signal('');
-  readonly success = signal('');
-  readonly submitting = signal(false);
+  readonly purposes = LISTING_PURPOSES;
+  readonly durationPresets = AD_DURATION_PRESETS;
+  readonly provinces = SRI_LANKA_PROVINCES;
 
+  readonly step = signal<1 | 2>(1);
+  readonly categories = signal<Category[]>([]);
+  readonly error = signal('');
+  readonly fieldErrors = signal<Record<string, string>>({});
+  readonly submitting = signal(false);
+  readonly paymentQuote = signal<PaymentCalculationResponse | null>(null);
+  readonly uploadedUrls = signal<string[]>([]);
+  readonly imagePreviews = signal<string[]>([]);
+
+  listingPurpose: ListingPurpose = 'Sale';
+  subCategorySlug = '';
+  durationDays = 30;
+  customDuration = false;
+  customDurationDays = 45;
   title = '';
-  categoryId = '';
   description = '';
   price?: number;
   priceType = 'Fixed';
   condition = 'Used';
-  city = '';
-  imageUrl = '';
-  contactPhone = '';
+  province = '';
+  district = '';
+  address = '';
+  latitude?: number;
+  longitude?: number;
+  whatsappNumber = '';
+  mobileNumber = '';
   contactEmail = '';
-  showPhone = true;
-  showEmail = false;
+  pendingListingId = '';
+
+  cardNumber = '';
+  cardHolderName = '';
+  expiryMonth = '';
+  expiryYear = '';
+  cvv = '';
+
+  readonly subCategories = computed(() => POST_AD_SUBCATEGORIES[this.listingPurpose] ?? []);
+
+  get availableDistricts() {
+    return this.provinces.find((x) => x.name === this.province)?.districts ?? [];
+  }
 
   ngOnInit(): void {
     this.contactEmail = this.auth.user()?.email ?? '';
     this.api.getCategories().subscribe((cats) => this.categories.set(cats));
-    this.api.getLocationsByType('City').subscribe({
-      next: (locs) => this.cities.set(locs),
-      error: () => this.api.getLocations().subscribe((locs) => this.cities.set(locs)),
+  }
+
+  onPurposeChange(): void {
+    this.subCategorySlug = '';
+    this.paymentQuote.set(null);
+  }
+
+  onSubCategoryChange(): void {
+    this.refreshQuote();
+  }
+
+  onProvinceChange(): void {
+    this.district = '';
+  }
+
+  onDurationChange(): void {
+    if (!this.customDuration) {
+      this.refreshQuote();
+    }
+  }
+
+  effectiveDuration(): number {
+    return this.customDuration ? this.customDurationDays : this.durationDays;
+  }
+
+  selectedSubCategory(): PostAdSubCategory | undefined {
+    return this.subCategories().find((s) => s.slug === this.subCategorySlug);
+  }
+
+  resolveCategoryId(): string | undefined {
+    const sub = this.selectedSubCategory();
+    if (!sub) return undefined;
+    return this.categories().find((c) => c.slug === sub.categorySlug)?.id;
+  }
+
+  onFilesSelected(e: Event): void {
+    const input = e.target as HTMLInputElement;
+    if (!input.files?.length) return;
+
+    const files = Array.from(input.files);
+    const err = validateImageCount(this.uploadedUrls().length + files.length);
+    if (err) {
+      this.error.set(err);
+      return;
+    }
+
+    this.error.set('');
+    this.submitting.set(true);
+    this.images.uploadImages(files).subscribe({
+      next: (urls) => {
+        this.uploadedUrls.update((prev) => [...prev, ...urls]);
+        this.imagePreviews.update((prev) => [...prev, ...urls]);
+        this.submitting.set(false);
+        input.value = '';
+      },
+      error: () => {
+        this.error.set('Failed to upload images. Try again.');
+        this.submitting.set(false);
+      },
     });
   }
 
-  onSubmit(): void {
-    if (!this.title || !this.categoryId || !this.description) return;
+  removeImage(index: number): void {
+    this.uploadedUrls.update((prev) => prev.filter((_, i) => i !== index));
+    this.imagePreviews.update((prev) => prev.filter((_, i) => i !== index));
+  }
 
+  useMyLocation(): void {
+    if (!navigator.geolocation) {
+      this.error.set('Geolocation is not supported by your browser.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        this.latitude = pos.coords.latitude;
+        this.longitude = pos.coords.longitude;
+      },
+      () => this.error.set('Could not get your location.')
+    );
+  }
+
+  validateForm(): boolean {
+    const errors: Record<string, string> = {};
+
+    if (!this.listingPurpose) errors['purpose'] = 'Main category is required.';
+    if (!this.subCategorySlug) errors['subCategory'] = 'Sub category is required.';
+
+    const titleErr = validateAdTitle(this.title);
+    if (titleErr) errors['title'] = titleErr;
+
+    const descErr = validateDescription(this.description);
+    if (descErr) errors['description'] = descErr;
+
+    if (!this.province) errors['province'] = 'Province is required.';
+    if (!this.district) errors['district'] = 'District is required.';
+
+    if (!isValidSlMobile(this.whatsappNumber)) errors['whatsapp'] = 'Valid 10-digit Sri Lankan WhatsApp number required.';
+    if (!isValidSlMobile(this.mobileNumber)) errors['mobile'] = 'Valid 10-digit Sri Lankan mobile number required.';
+
+    const dur = this.effectiveDuration();
+    if (dur < 1 || dur > 365) errors['duration'] = 'Duration must be 1–365 days.';
+
+    const imgErr = validateImageCount(this.uploadedUrls().length);
+    if (imgErr) errors['images'] = imgErr;
+
+    if (!this.resolveCategoryId()) errors['subCategory'] = 'Could not map sub category. Refresh and try again.';
+
+    this.fieldErrors.set(errors);
+    return Object.keys(errors).length === 0;
+  }
+
+  goToPayment(): void {
     this.error.set('');
-    this.success.set('');
+    if (!this.validateForm()) {
+      this.error.set('Please fix the errors below.');
+      return;
+    }
+
+    const categoryId = this.resolveCategoryId()!;
     this.submitting.set(true);
 
+    this.api
+      .calculatePayment({
+        categoryId,
+        listingPurpose: this.listingPurpose,
+        durationDays: this.effectiveDuration(),
+      })
+      .subscribe({
+        next: (quote) => {
+          this.paymentQuote.set(quote);
+          this.createDraftListing(categoryId, quote.totalAmount);
+        },
+        error: (err: HttpErrorResponse) => {
+          this.error.set(err.error?.error ?? 'Could not calculate payment.');
+          this.submitting.set(false);
+        },
+      });
+  }
+
+  private createDraftListing(categoryId: string, _total: number): void {
     const slug = slugify(this.title) + '-' + Date.now().toString(36);
+    const dur = this.effectiveDuration();
+    const sub = this.selectedSubCategory()!;
 
     this.api
       .createListing({
-        categoryId: this.categoryId,
-        title: this.title,
+        categoryId,
+        title: this.title.trim(),
         slug,
-        description: this.description,
+        description: this.buildDescription(sub.label),
         price: this.price,
         currency: 'LKR',
         priceType: this.priceType,
         condition: this.condition,
-        city: this.city || undefined,
+        listingPurpose: this.listingPurpose,
+        mobilePhone: formatSlMobileDisplay(this.mobileNumber),
+        whatsAppPhone: formatSlMobileDisplay(this.whatsappNumber),
+        address: this.address.trim() || undefined,
+        adDurationDays: dur,
+        province: this.province,
+        district: this.district,
+        city: this.district,
         country: 'Sri Lanka',
-        contactPhone: this.contactPhone || undefined,
+        contactPhone: formatSlMobileDisplay(this.mobileNumber),
         contactEmail: this.contactEmail || undefined,
-        showPhone: this.showPhone,
-        showEmail: this.showEmail,
-        images: this.imageUrl
-          ? [{ url: this.imageUrl, sortOrder: 0, isPrimary: true, altText: this.title }]
-          : undefined,
+        showPhone: true,
+        showEmail: !!this.contactEmail,
+        latitude: this.latitude,
+        longitude: this.longitude,
+        images: this.uploadedUrls().map((url, i) => ({
+          url,
+          sortOrder: i,
+          isPrimary: i === 0,
+          altText: this.title,
+        })),
       })
       .subscribe({
         next: (listing) => {
-          this.success.set('Ad created successfully! Redirecting...');
-          setTimeout(() => this.router.navigate(['/listing', listing.id]), 1500);
-        },
-        error: (err: HttpErrorResponse) => {
-          this.error.set(err.error?.error ?? 'Failed to create listing. Logout and login again, then retry.');
+          this.pendingListingId = listing.id;
+          this.step.set(2);
           this.submitting.set(false);
         },
+        error: (err: HttpErrorResponse) => {
+          this.error.set(err.error?.error ?? 'Failed to save advertisement.');
+          this.submitting.set(false);
+        },
+      });
+  }
+
+  payAndPublish(): void {
+    this.error.set('');
+    const errors: Record<string, string> = {};
+    const cardErr = validateCardNumber(this.cardNumber);
+    if (cardErr) errors['cardNumber'] = cardErr;
+    if (!this.cardHolderName.trim()) errors['cardHolderName'] = 'Card holder name is required.';
+    if (!this.expiryMonth || !this.expiryYear) errors['expiry'] = 'Expiry date is required.';
+    const cvvErr = validateCvv(this.cvv);
+    if (cvvErr) errors['cvv'] = cvvErr;
+    this.fieldErrors.set(errors);
+    if (Object.keys(errors).length) {
+      this.error.set('Please fix payment details.');
+      return;
+    }
+
+    this.submitting.set(true);
+    this.api
+      .completePayment({
+        listingId: this.pendingListingId,
+        cardNumber: this.cardNumber.replace(/\D/g, ''),
+        cardHolderName: this.cardHolderName.trim(),
+        expiryMonth: this.expiryMonth,
+        expiryYear: this.expiryYear,
+        cvv: this.cvv,
+      })
+      .subscribe({
+        next: () => {
+          this.router.navigate(['/listing', this.pendingListingId]);
+        },
+        error: (err: HttpErrorResponse) => {
+          this.error.set(err.error?.error ?? 'Payment failed. Your ad remains pending payment.');
+          this.submitting.set(false);
+        },
+      });
+  }
+
+  backToForm(): void {
+    this.step.set(1);
+    this.error.set('');
+  }
+
+  private buildDescription(subLabel: string): string {
+    return [
+      `Sub Category: ${subLabel}`,
+      `Listing Type: For ${this.listingPurpose}`,
+      `Duration: ${this.effectiveDuration()} days`,
+      this.address ? `Address: ${this.address}` : null,
+      `Location: ${this.district}, ${this.province}, Sri Lanka`,
+      this.latitude && this.longitude ? `GPS: ${this.latitude}, ${this.longitude}` : null,
+      '',
+      this.description.trim(),
+    ]
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  private refreshQuote(): void {
+    const categoryId = this.resolveCategoryId();
+    if (!categoryId) return;
+    this.api
+      .calculatePayment({
+        categoryId,
+        listingPurpose: this.listingPurpose,
+        durationDays: this.effectiveDuration(),
+      })
+      .subscribe({
+        next: (q) => this.paymentQuote.set(q),
+        error: () => this.paymentQuote.set(null),
       });
   }
 }

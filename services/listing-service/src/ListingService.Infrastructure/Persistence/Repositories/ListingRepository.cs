@@ -123,7 +123,7 @@ public class ListingRepository : IListingRepository
         var totalCount = await connection.ExecuteScalarAsync<int>(countSql, parameters);
 
         var sql = $@"
-            SELECT l.*, c.Id AS SplitCategoryId, c.Name, c.Slug, c.Description, c.IconUrl, c.ParentCategoryId, c.SortOrder, c.IsActive, c.CreatedAt, c.UpdatedAt
+            SELECT l.*, c.Id AS SplitCategoryId, c.Name, c.Slug, c.Description, c.IconUrl, c.ParentCategoryId, c.SortOrder, c.IsActive, c.PerDayPriceSale, c.PerDayPriceBuy, c.PerDayPriceRent, c.CreatedAt, c.UpdatedAt
             FROM Listings l
             INNER JOIN Categories c ON c.Id = l.CategoryId
             {where}
@@ -146,7 +146,7 @@ public class ListingRepository : IListingRepository
         using var connection = _connectionFactory.CreateConnection();
 
         var sql = $@"
-            SELECT TOP (@Limit) l.*, c.Id AS SplitCategoryId, c.Name, c.Slug, c.Description, c.IconUrl, c.ParentCategoryId, c.SortOrder, c.IsActive, c.CreatedAt, c.UpdatedAt
+            SELECT TOP (@Limit) l.*, c.Id AS SplitCategoryId, c.Name, c.Slug, c.Description, c.IconUrl, c.ParentCategoryId, c.SortOrder, c.IsActive, c.PerDayPriceSale, c.PerDayPriceBuy, c.PerDayPriceRent, c.CreatedAt, c.UpdatedAt
             FROM Listings l
             INNER JOIN Categories c ON c.Id = l.CategoryId
             WHERE l.IsFeatured = 1 AND l.Status = @ActiveStatus
@@ -170,7 +170,7 @@ public class ListingRepository : IListingRepository
         using var connection = _connectionFactory.CreateConnection();
 
         var sql = @"
-            SELECT l.*, c.Id AS SplitCategoryId, c.Name, c.Slug, c.Description, c.IconUrl, c.ParentCategoryId, c.SortOrder, c.IsActive, c.CreatedAt, c.UpdatedAt
+            SELECT l.*, c.Id AS SplitCategoryId, c.Name, c.Slug, c.Description, c.IconUrl, c.ParentCategoryId, c.SortOrder, c.IsActive, c.PerDayPriceSale, c.PerDayPriceBuy, c.PerDayPriceRent, c.CreatedAt, c.UpdatedAt
             FROM Listings l
             INNER JOIN Categories c ON c.Id = l.CategoryId
             WHERE l.SellerId = @SellerId AND l.Status <> @Deleted
@@ -235,7 +235,10 @@ public class ListingRepository : IListingRepository
                     Latitude = @Latitude, Longitude = @Longitude,
                     ContactPhone = @ContactPhone, ContactEmail = @ContactEmail, ShowPhone = @ShowPhone, ShowEmail = @ShowEmail,
                     ViewCount = @ViewCount, IsFeatured = @IsFeatured, FeaturedUntil = @FeaturedUntil,
-                    PublishedAt = @PublishedAt, ExpiresAt = @ExpiresAt, UpdatedAt = @UpdatedAt
+                    PublishedAt = @PublishedAt, ExpiresAt = @ExpiresAt,
+                    ListingPurpose = @ListingPurpose, MobilePhone = @MobilePhone, WhatsAppPhone = @WhatsAppPhone,
+                    Address = @Address, AdDurationDays = @AdDurationDays, PaymentAmount = @PaymentAmount,
+                    UpdatedAt = @UpdatedAt
                 WHERE Id = @Id",
                 MapListingParams(listing), transaction);
 
@@ -281,7 +284,7 @@ public class ListingRepository : IListingRepository
     private async Task<Listing?> GetListingInternalAsync(IDbConnection connection, string whereClause, object parameters)
     {
         var sql = $@"
-            SELECT l.*, c.Id AS SplitCategoryId, c.Name, c.Slug, c.Description, c.IconUrl, c.ParentCategoryId, c.SortOrder, c.IsActive, c.CreatedAt, c.UpdatedAt
+            SELECT l.*, c.Id AS SplitCategoryId, c.Name, c.Slug, c.Description, c.IconUrl, c.ParentCategoryId, c.SortOrder, c.IsActive, c.PerDayPriceSale, c.PerDayPriceBuy, c.PerDayPriceRent, c.CreatedAt, c.UpdatedAt
             FROM Listings l
             INNER JOIN Categories c ON c.Id = l.CategoryId
             WHERE {whereClause}";
@@ -328,7 +331,9 @@ public class ListingRepository : IListingRepository
                     listing.SetCategory(Category.Restore(
                         categoryRow.SplitCategoryId, categoryRow.Name, categoryRow.Slug, categoryRow.Description,
                         categoryRow.IconUrl, categoryRow.ParentCategoryId, categoryRow.SortOrder,
-                        categoryRow.IsActive, categoryRow.CreatedAt, categoryRow.UpdatedAt));
+                        categoryRow.IsActive,
+                        categoryRow.PerDayPriceSale, categoryRow.PerDayPriceBuy, categoryRow.PerDayPriceRent,
+                        categoryRow.CreatedAt, categoryRow.UpdatedAt));
                     listingMap.Add(listing.Id, listing);
                 }
 
@@ -387,12 +392,14 @@ public class ListingRepository : IListingRepository
                 Id, SellerId, CategoryId, Title, Slug, Description, Price, Currency, PriceType, Condition, Status,
                 LocationId, City, District, Province, Country, Latitude, Longitude,
                 ContactPhone, ContactEmail, ShowPhone, ShowEmail, ViewCount, IsFeatured, FeaturedUntil,
-                PublishedAt, ExpiresAt, CreatedAt, UpdatedAt)
+                PublishedAt, ExpiresAt, ListingPurpose, MobilePhone, WhatsAppPhone, Address, AdDurationDays, PaymentAmount,
+                CreatedAt, UpdatedAt)
             VALUES (
                 @Id, @SellerId, @CategoryId, @Title, @Slug, @Description, @Price, @Currency, @PriceType, @Condition, @Status,
                 @LocationId, @City, @District, @Province, @Country, @Latitude, @Longitude,
                 @ContactPhone, @ContactEmail, @ShowPhone, @ShowEmail, @ViewCount, @IsFeatured, @FeaturedUntil,
-                @PublishedAt, @ExpiresAt, @CreatedAt, @UpdatedAt)",
+                @PublishedAt, @ExpiresAt, @ListingPurpose, @MobilePhone, @WhatsAppPhone, @Address, @AdDurationDays, @PaymentAmount,
+                @CreatedAt, @UpdatedAt)",
             MapListingParams(listing), transaction);
     }
 
@@ -438,6 +445,7 @@ public class ListingRepository : IListingRepository
             row.LocationId, row.City, row.District, row.Province, row.Country,
             row.Latitude, row.Longitude, row.ContactPhone, row.ContactEmail, row.ShowPhone, row.ShowEmail,
             row.ViewCount, row.IsFeatured, row.FeaturedUntil, row.PublishedAt, row.ExpiresAt,
+            row.ListingPurpose, row.MobilePhone, row.WhatsAppPhone, row.Address, row.AdDurationDays, row.PaymentAmount,
             row.CreatedAt, row.UpdatedAt);
 
     private static object MapListingParams(Listing listing) => new
@@ -469,6 +477,12 @@ public class ListingRepository : IListingRepository
         listing.FeaturedUntil,
         listing.PublishedAt,
         listing.ExpiresAt,
+        listing.ListingPurpose,
+        listing.MobilePhone,
+        listing.WhatsAppPhone,
+        listing.Address,
+        listing.AdDurationDays,
+        listing.PaymentAmount,
         listing.CreatedAt,
         listing.UpdatedAt
     };
@@ -502,6 +516,12 @@ public class ListingRepository : IListingRepository
         public DateTime? FeaturedUntil { get; set; }
         public DateTime? PublishedAt { get; set; }
         public DateTime? ExpiresAt { get; set; }
+        public string? ListingPurpose { get; set; }
+        public string? MobilePhone { get; set; }
+        public string? WhatsAppPhone { get; set; }
+        public string? Address { get; set; }
+        public int AdDurationDays { get; set; } = 30;
+        public decimal? PaymentAmount { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
     }
@@ -516,6 +536,9 @@ public class ListingRepository : IListingRepository
         public Guid? ParentCategoryId { get; set; }
         public int SortOrder { get; set; }
         public bool IsActive { get; set; }
+        public decimal PerDayPriceSale { get; set; }
+        public decimal PerDayPriceBuy { get; set; }
+        public decimal PerDayPriceRent { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
     }

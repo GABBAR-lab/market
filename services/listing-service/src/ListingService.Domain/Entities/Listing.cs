@@ -38,6 +38,13 @@ public class Listing : AuditableEntity
     public DateTime? PublishedAt { get; private set; }
     public DateTime? ExpiresAt { get; private set; }
 
+    public string? ListingPurpose { get; private set; }
+    public string? MobilePhone { get; private set; }
+    public string? WhatsAppPhone { get; private set; }
+    public string? Address { get; private set; }
+    public int AdDurationDays { get; private set; } = 30;
+    public decimal? PaymentAmount { get; private set; }
+
     public Category? Category { get; private set; }
     public Location? Location { get; private set; }
     public IReadOnlyCollection<ListingImage> Images => _images.AsReadOnly();
@@ -220,6 +227,50 @@ public class Listing : AuditableEntity
         MarkAsUpdated();
     }
 
+    public void ApplyPostAdDetails(
+        string listingPurpose,
+        string mobilePhone,
+        string whatsAppPhone,
+        string? address,
+        int adDurationDays,
+        double? latitude,
+        double? longitude)
+    {
+        ListingPurpose = listingPurpose.Trim();
+        MobilePhone = mobilePhone.Trim();
+        WhatsAppPhone = whatsAppPhone.Trim();
+        Address = address?.Trim();
+        AdDurationDays = adDurationDays > 0 ? adDurationDays : 30;
+        if (latitude.HasValue && longitude.HasValue)
+        {
+            Latitude = latitude;
+            Longitude = longitude;
+        }
+        MarkAsUpdated();
+    }
+
+    public void SetPendingPayment(decimal amount)
+    {
+        PaymentAmount = amount;
+        Status = ListingStatus.PendingPayment;
+        MarkAsUpdated();
+    }
+
+    public void ActivateAfterPayment(bool requireAdminApproval)
+    {
+        if (requireAdminApproval)
+        {
+            Status = ListingStatus.PendingReview;
+        }
+        else
+        {
+            Status = ListingStatus.Active;
+            PublishedAt = DateTime.UtcNow;
+            ExpiresAt = DateTime.UtcNow.AddDays(AdDurationDays);
+        }
+        MarkAsUpdated();
+    }
+
     public void Feature(DateTime featuredUntil)
     {
         IsFeatured = true;
@@ -274,6 +325,12 @@ public class Listing : AuditableEntity
         DateTime? featuredUntil,
         DateTime? publishedAt,
         DateTime? expiresAt,
+        string? listingPurpose,
+        string? mobilePhone,
+        string? whatsAppPhone,
+        string? address,
+        int adDurationDays,
+        decimal? paymentAmount,
         DateTime createdAt,
         DateTime? updatedAt)
     {
@@ -306,6 +363,12 @@ public class Listing : AuditableEntity
             FeaturedUntil = featuredUntil,
             PublishedAt = publishedAt,
             ExpiresAt = expiresAt,
+            ListingPurpose = listingPurpose,
+            MobilePhone = mobilePhone,
+            WhatsAppPhone = whatsAppPhone,
+            Address = address,
+            AdDurationDays = adDurationDays,
+            PaymentAmount = paymentAmount,
             CreatedAt = createdAt,
             UpdatedAt = updatedAt
         };

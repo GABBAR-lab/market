@@ -1,5 +1,6 @@
 using Dapper;
 using ListingService.Application.Interfaces;
+using ListingService.Application.DTOs.Payments;
 using ListingService.Domain.Entities;
 using ListingService.Domain.Enums;
 
@@ -162,6 +163,50 @@ public class CategoryRepository : ICategoryRepository
             new { CategoryId = categoryId, Deleted = (int)ListingStatus.Deleted, Sold = (int)ListingStatus.Sold });
     }
 
+    public async Task<IReadOnlyList<CategoryPricingResponse>> GetRootCategoryPricingAsync()
+    {
+        using var connection = _connectionFactory.CreateConnection();
+        var rows = await connection.QueryAsync<CategoryPricingRow>(@"
+            SELECT Id, Name, Slug, PerDayPriceSale, PerDayPriceBuy, PerDayPriceRent
+            FROM Categories
+            WHERE ParentCategoryId IS NULL AND IsActive = 1
+            ORDER BY SortOrder");
+
+        return rows.Select(r => new CategoryPricingResponse(
+            r.Id, r.Name, r.Slug, r.PerDayPriceSale, r.PerDayPriceBuy, r.PerDayPriceRent)).ToList();
+    }
+
+    public async Task<CategoryPricingResponse?> UpdatePricingAsync(
+        Guid categoryId, decimal sale, decimal buy, decimal rent)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+        var rows = await connection.ExecuteAsync(@"
+            UPDATE Categories SET
+                PerDayPriceSale = @Sale, PerDayPriceBuy = @Buy, PerDayPriceRent = @Rent, UpdatedAt = @Now
+            WHERE Id = @Id AND ParentCategoryId IS NULL",
+            new { Id = categoryId, Sale = sale, Buy = buy, Rent = rent, Now = DateTime.UtcNow });
+
+        if (rows == 0)
+        {
+            return null;
+        }
+
+        return await connection.QuerySingleOrDefaultAsync<CategoryPricingResponse>(@"
+            SELECT Id, Name, Slug, PerDayPriceSale, PerDayPriceBuy, PerDayPriceRent
+            FROM Categories WHERE Id = @Id",
+            new { Id = categoryId });
+    }
+
+    private class CategoryPricingRow
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Slug { get; set; } = string.Empty;
+        public decimal PerDayPriceSale { get; set; }
+        public decimal PerDayPriceBuy { get; set; }
+        public decimal PerDayPriceRent { get; set; }
+    }
+
     private static async Task<IReadOnlyList<CategoryAttribute>> GetAttributesInternalAsync(System.Data.IDbConnection connection, Guid categoryId)
     {
         var rows = await connection.QueryAsync<CategoryAttributeRow>(
@@ -194,7 +239,9 @@ public class CategoryRepository : ICategoryRepository
 
     private static Category MapCategory(CategoryRow row) =>
         Category.Restore(row.Id, row.Name, row.Slug, row.Description, row.IconUrl,
-            row.ParentCategoryId, row.SortOrder, row.IsActive, row.CreatedAt, row.UpdatedAt);
+            row.ParentCategoryId, row.SortOrder, row.IsActive,
+            row.PerDayPriceSale, row.PerDayPriceBuy, row.PerDayPriceRent,
+            row.CreatedAt, row.UpdatedAt);
 
     private static CategoryAttribute MapAttribute(CategoryAttributeRow row) =>
         CategoryAttribute.Restore(row.Id, row.CategoryId, row.Name, row.DisplayName,
@@ -225,6 +272,9 @@ public class CategoryRepository : ICategoryRepository
         public Guid? ParentCategoryId { get; set; }
         public int SortOrder { get; set; }
         public bool IsActive { get; set; }
+        public decimal PerDayPriceSale { get; set; } = 50;
+        public decimal PerDayPriceBuy { get; set; } = 30;
+        public decimal PerDayPriceRent { get; set; } = 40;
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
     }

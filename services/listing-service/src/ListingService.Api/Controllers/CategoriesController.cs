@@ -23,6 +23,13 @@ public class CategoriesController : ControllerBase
         return Ok(result.Value);
     }
 
+    [HttpGet("tree")]
+    public async Task<IActionResult> GetTree()
+    {
+        var result = await _categoryService.GetTreeAsync();
+        return Ok(result.Value);
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
     {

@@ -37,6 +37,16 @@ export interface CategoryResponse {
   updatedAt?: string;
 }
 
+export interface CategoryTreeNodeResponse {
+  id: string;
+  name: string;
+  slug: string;
+  iconUrl?: string;
+  listingCount: number;
+  searchTerm?: string;
+  subCategories: CategoryTreeNodeResponse[];
+}
+
 export interface ListingResponse {
   id: string;
   sellerId: string;
@@ -67,6 +77,22 @@ export interface ListingResponse {
   primaryImageUrl?: string;
   createdAt: string;
   updatedAt?: string;
+}
+
+export interface ListingImageResponse {
+  id: string;
+  url: string;
+  thumbnailUrl?: string;
+  altText?: string;
+  sortOrder: number;
+  isPrimary: boolean;
+}
+
+export interface ListingDetailResponse extends ListingResponse {
+  locationName?: string;
+  latitude?: number;
+  longitude?: number;
+  images: ListingImageResponse[];
 }
 
 export interface ListingSearchParams {
@@ -101,6 +127,11 @@ export interface CreateListingRequest {
   currency: string;
   priceType: string;
   condition: string;
+  listingPurpose: string;
+  mobilePhone: string;
+  whatsAppPhone: string;
+  address?: string;
+  adDurationDays: number;
   locationId?: string;
   city?: string;
   district?: string;
@@ -110,8 +141,55 @@ export interface CreateListingRequest {
   contactEmail?: string;
   showPhone: boolean;
   showEmail: boolean;
+  latitude?: number;
+  longitude?: number;
   expiresAt?: string;
   images?: CreateListingImageRequest[];
+}
+
+export interface PaymentCalculationRequest {
+  categoryId: string;
+  listingPurpose: string;
+  durationDays: number;
+}
+
+export interface PaymentCalculationResponse {
+  categoryId: string;
+  categoryName: string;
+  listingPurpose: string;
+  durationDays: number;
+  perDayPrice: number;
+  totalAmount: number;
+  currency: string;
+}
+
+export interface CompletePaymentRequest {
+  listingId: string;
+  cardNumber: string;
+  cardHolderName: string;
+  expiryMonth: string;
+  expiryYear: string;
+  cvv: string;
+}
+
+export interface PaymentResponse {
+  paymentId: string;
+  listingId: string;
+  amount: number;
+  currency: string;
+  status: string;
+  transactionRef?: string;
+  listingStatus: string;
+  paidAt?: string;
+}
+
+export interface CategoryPricingResponse {
+  id: string;
+  name: string;
+  slug: string;
+  perDayPriceSale: number;
+  perDayPriceBuy: number;
+  perDayPriceRent: number;
 }
 
 export interface CreateListingImageRequest {

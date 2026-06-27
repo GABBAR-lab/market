@@ -40,5 +40,28 @@
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
+  },
+  "/api/payments": {
+    "target": "http://localhost:5003",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/api/media": {
+    "target": "http://localhost:5003",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/api/admin": {
+    "target": "http://localhost:5003",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/uploads": {
+    "target": "http://localhost:5003",
+    "secure": false,
+    "changeOrigin": true
   }
 }

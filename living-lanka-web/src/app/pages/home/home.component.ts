@@ -1,121 +1,129 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { HeroSectionComponent } from '../../shared/components/hero-section/hero-section.component';
-import { PropertySearchComponent } from '../../shared/components/property-search/property-search.component';
-import {
-  CategoryIconCardComponent,
-  CategoryListItemComponent,
-} from '../../shared/components/category-card/category-card.component';
-import {
-  PropertyCardComponent,
-  ListingCardComponent,
-} from '../../shared/components/property-card/property-card.component';
+import { FormsModule } from '@angular/forms';
+import { LocationBarComponent } from '../../shared/components/location-bar/location-bar.component';
+import { IkmanAdCardComponent } from '../../shared/components/ikman-ad-card/ikman-ad-card.component';
+import { CategoryAccordionComponent } from '../../shared/components/category-accordion/category-accordion.component';
+import { CategoryIconCardComponent } from '../../shared/components/category-card/category-card.component';
 import { ListingApiService } from '../../core/services/listing-api.service';
-import { Category, PropertyListing, SearchFilters } from '../../core/models/marketplace.models';
+import { LocaleService } from '../../core/services/locale.service';
+import { CATEGORY_QUICK_LINKS } from '../../core/data/category-subcategories';
+import { Category, PropertyListing } from '../../core/models/marketplace.models';
 
 @Component({
   selector: 'app-home',
-  imports: [
-    RouterLink,
-    HeroSectionComponent,
-    PropertySearchComponent,
-    CategoryIconCardComponent,
-    CategoryListItemComponent,
-    PropertyCardComponent,
-    ListingCardComponent,
-  ],
+  imports: [RouterLink, FormsModule, LocationBarComponent, IkmanAdCardComponent, CategoryAccordionComponent, CategoryIconCardComponent],
   template: `
-    <app-hero-section (search)="onSearch($event)" />
+    <app-location-bar (locationChange)="onLocationFilter($event)" />
 
-    <app-property-search (search)="onSearch($event)" />
-
-    <!-- Stats bar -->
-    <section class="relative z-10 -mt-6">
+    <section class="border-b border-gray-100 bg-gray-50 py-4">
       <div class="section-container">
-        <div class="premium-card grid grid-cols-2 gap-4 p-6 sm:grid-cols-4 sm:gap-6 sm:p-8">
-          @for (stat of stats; track stat.label) {
-            <div class="text-center">
-              <p class="text-2xl font-extrabold text-maroon-900 sm:text-3xl">{{ stat.value }}</p>
-              <p class="mt-1 text-xs font-medium uppercase tracking-wider text-gray-500 sm:text-sm">{{ stat.label }}</p>
+        <form class="flex gap-2" (submit)="onSearchSubmit($event)">
+          <input
+            type="search"
+            [(ngModel)]="searchQuery"
+            name="q"
+            class="input input-bordered flex-1 bg-white"
+            placeholder="Search for anything in Sri Lanka..."
+          />
+          <button type="submit" class="btn bg-maroon-800 text-white">Search</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="section-container py-10">
+      <div class="mb-6 flex items-center justify-between">
+        <h2 class="text-xl font-bold text-gray-900 sm:text-2xl">{{ locale.label('browse') }}</h2>
+        <a routerLink="/categories" class="text-sm font-semibold text-[#0074ba] hover:underline">View all</a>
+      </div>
+
+      @if (loading()) {
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          @for (i of [1,2,3,4,5,6,7,8]; track i) {
+            <div class="skeleton h-28 rounded-lg"></div>
+          }
+        </div>
+      } @else {
+        <div class="mb-8 hidden grid-cols-2 gap-4 sm:grid md:grid-cols-4 lg:grid-cols-8">
+          @for (cat of categories(); track cat.id) {
+            <app-category-icon-card [category]="cat" />
+          }
+        </div>
+        <div class="lg:hidden">
+          <app-category-accordion />
+        </div>
+      }
+    </section>
+
+    <section class="bg-gray-50 py-10">
+      <div class="section-container">
+        <h2 class="mb-6 text-xl font-bold text-gray-900 sm:text-2xl">{{ locale.label('featured') }}</h2>
+        @if (loading()) {
+          <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            @for (i of [1,2,3,4,5]; track i) {
+              <div class="skeleton aspect-[4/3] rounded-lg"></div>
+            }
+          </div>
+        } @else if (featuredListings().length) {
+          <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            @for (listing of featuredListings(); track listing.id) {
+              <app-ikman-ad-card [listing]="listing" [showMember]="listing.isFeatured" />
+            }
+          </div>
+        } @else {
+          <p class="text-gray-500">No featured ads yet.</p>
+        }
+      </div>
+    </section>
+
+    <section class="section-container py-12">
+      <div class="rounded-2xl bg-gradient-to-r from-maroon-900 to-maroon-950 p-8 text-center text-white sm:p-12">
+        <h2 class="text-2xl font-bold sm:text-3xl">Start making money!</h2>
+        <p class="mx-auto mt-3 max-w-lg text-white/80">
+          Do you have something to sell? Post your first ad and start making money!
+        </p>
+        <a routerLink="/post-ad" class="btn btn-lg mt-6 border-0 bg-amber-400 text-gray-900 hover:bg-amber-300">
+          Post your ad
+        </a>
+      </div>
+    </section>
+
+    <section class="border-t border-gray-200 bg-white py-12">
+      <div class="section-container">
+        <h2 class="mb-8 text-xl font-bold text-gray-900">Quick links</h2>
+        <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          @for (block of quickLinks; track block.slug) {
+            <div>
+              <h3 class="mb-3 font-bold text-maroon-900">
+                <a [routerLink]="['/category', block.slug]" class="hover:underline">{{ block.title }}</a>
+              </h3>
+              <ul class="space-y-2 text-sm text-gray-600">
+                @for (sub of block.subcategories; track sub.label) {
+                  <li>
+                    <a
+                      [routerLink]="['/search']"
+                      [queryParams]="{ query: sub.searchTerm, category: sub.slug }"
+                      class="hover:text-maroon-800 hover:underline"
+                    >
+                      {{ sub.label }}
+                    </a>
+                  </li>
+                }
+              </ul>
             </div>
           }
         </div>
       </div>
     </section>
 
-    <!-- Quick category icons -->
-    <section class="section-container py-14">
-      <div class="mb-8 flex items-end justify-between">
-        <div>
-          <p class="text-sm font-semibold uppercase tracking-widest text-gold-600">Browse</p>
-          <h2 class="text-2xl font-bold text-gray-900 sm:text-3xl">Popular Categories</h2>
-        </div>
+    <section class="section-container pb-16">
+      <div class="mb-6 flex items-center justify-between">
+        <h2 class="text-xl font-bold text-gray-900">Latest Ads</h2>
+        <a routerLink="/all-ads" class="text-sm font-semibold text-maroon-800 hover:underline">View all</a>
       </div>
-      @if (loading()) {
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-4">
-          @for (i of [1,2,3,4,5,6,7,8,9,10]; track i) {
-            <div class="skeleton h-28 rounded-2xl"></div>
-          }
-        </div>
-      } @else {
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 lg:gap-4">
-          @for (cat of quickCategories(); track cat.id) {
-            <app-category-icon-card [category]="cat" />
-          }
-        </div>
-      }
-    </section>
-
-    <!-- Search by categories list -->
-    <section class="bg-gradient-to-b from-maroon-950 via-maroon-900 to-maroon-950 py-16 text-white">
-      <div class="section-container">
-        <p class="text-sm font-semibold uppercase tracking-widest text-gold-400">Explore</p>
-        <h2 class="mb-10 text-2xl font-bold sm:text-3xl">Search Items By Categories</h2>
-        <div class="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-4 lg:gap-2">
-          @for (cat of categories(); track cat.id) {
-            <app-category-list-item [category]="cat" variant="dark" />
-          }
-        </div>
-      </div>
-    </section>
-
-    <!-- Featured Properties -->
-    <section class="section-container py-16">
-      <div class="mb-10 text-center">
-        <p class="text-sm font-semibold uppercase tracking-widest text-gold-600">Premium Picks</p>
-        <h2 class="text-2xl font-bold text-gray-900 sm:text-3xl">Featured Properties</h2>
-      </div>
-      <div class="rounded-3xl bg-gradient-to-br from-maroon-900 via-maroon-950 to-black p-4 shadow-2xl ring-1 ring-gold-500/20 sm:p-8 lg:p-10">
-        @if (loading()) {
-          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            @for (i of [1,2,3,4]; track i) {
-              <div class="skeleton h-80 rounded-2xl"></div>
-            }
-          </div>
-        } @else if (featuredListings().length) {
-          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            @for (listing of featuredListings(); track listing.id) {
-              <app-property-card [listing]="listing" />
-            }
-          </div>
-        } @else {
-          <p class="py-12 text-center text-white/70">No featured listings yet. Be the first to post!</p>
-        }
-      </div>
-    </section>
-
-    <!-- Featured Listings -->
-    <section class="section-container pb-20">
-      <div class="mb-10 flex items-end justify-between">
-        <div>
-          <p class="text-sm font-semibold uppercase tracking-widest text-gold-600">Latest</p>
-          <h2 class="text-2xl font-bold text-gray-900 sm:text-3xl">Fresh Listings</h2>
-        </div>
-        <a routerLink="/search" class="btn btn-outline btn-sm border-maroon-800 text-maroon-800">View All</a>
-      </div>
-      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        @for (listing of featuredListings(); track listing.id) {
-          <app-listing-card [listing]="listing" />
+      <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        @for (listing of latestListings(); track listing.id) {
+          <app-ikman-ad-card [listing]="listing" />
         }
       </div>
     </section>
@@ -124,39 +132,53 @@ import { Category, PropertyListing, SearchFilters } from '../../core/models/mark
 export class HomeComponent implements OnInit {
   private readonly api = inject(ListingApiService);
   private readonly router = inject(Router);
+  readonly locale = inject(LocaleService);
 
   readonly categories = signal<Category[]>([]);
-  readonly quickCategories = signal<Category[]>([]);
   readonly featuredListings = signal<PropertyListing[]>([]);
+  readonly latestListings = signal<PropertyListing[]>([]);
   readonly loading = signal(true);
+  readonly quickLinks = CATEGORY_QUICK_LINKS;
 
-  readonly stats = [
-    { value: '16+', label: 'Categories' },
-    { value: '50K+', label: 'Active Ads' },
-    { value: '25', label: 'Districts' },
-    { value: 'Free', label: 'To Post' },
-  ];
+  searchQuery = '';
+  locationFilter = '';
 
   ngOnInit(): void {
-    this.api.getCategories().subscribe({
-      next: (cats) => {
-        this.categories.set(cats);
-        this.quickCategories.set(cats.slice(0, 10));
-        this.stats[0].value = `${cats.length}+`;
-      },
-      error: () => this.loading.set(false),
-    });
+    this.api.getCategories().subscribe({ next: (cats) => this.categories.set(cats) });
+    this.loadListings();
+  }
 
-    this.api.getFeaturedListings(8).subscribe({
-      next: (listings) => {
-        this.featuredListings.set(listings);
-        this.loading.set(false);
+  onLocationFilter(location: string): void {
+    this.locationFilter = location;
+    this.loadListings();
+  }
+
+  onSearchSubmit(e: Event): void {
+    e.preventDefault();
+    this.router.navigate(['/search'], {
+      queryParams: {
+        query: this.searchQuery || undefined,
+        province: this.locationFilter || undefined,
       },
-      error: () => this.loading.set(false),
     });
   }
 
-  onSearch(filters: SearchFilters): void {
-    this.router.navigate(['/search'], { queryParams: filters });
+  private loadListings(): void {
+    this.loading.set(true);
+    const filters = this.locationFilter ? { city: this.locationFilter } : {};
+
+    this.api.getFeaturedListings(10).subscribe({
+      next: (featured) => {
+        this.featuredListings.set(featured);
+        this.api.searchListings(filters, 1, 15).subscribe({
+          next: (result) => {
+            this.latestListings.set(result.items);
+            this.loading.set(false);
+          },
+          error: () => this.loading.set(false),
+        });
+      },
+      error: () => this.loading.set(false),
+    });
   }
 }

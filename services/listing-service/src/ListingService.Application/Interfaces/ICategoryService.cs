@@ -9,6 +9,7 @@ public interface ICategoryService
     Task<Result<CategoryDetailResponse>> GetByIdAsync(Guid id);
     Task<Result<CategoryDetailResponse>> GetBySlugAsync(string slug);
     Task<Result<IReadOnlyList<CategoryResponse>>> GetAllAsync();
+    Task<Result<IReadOnlyList<CategoryTreeNodeResponse>>> GetTreeAsync();
     Task<Result<IReadOnlyList<CategoryResponse>>> GetSubCategoriesAsync(Guid parentCategoryId);
     Task<Result<CategoryResponse>> UpdateAsync(Guid id, UpdateCategoryRequest request);
     Task<Result<CategoryAttributeResponse>> AddAttributeAsync(Guid categoryId, CreateCategoryAttributeRequest request);

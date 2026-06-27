@@ -24,8 +24,11 @@ public static class DatabaseSeeder
             {
                 categoryIds[slug] = id;
             }
+
+            await EnsureCategoryIconsAsync(connection, categoryIds);
         }
 
+        await EnsureSubCategoriesAsync(connection, categoryIds, now);
         await SeedSampleListingsAsync(connection, categoryIds, now);
     }
 
@@ -34,27 +37,27 @@ public static class DatabaseSeeder
         Dictionary<string, Guid> categoryIds,
         DateTime now)
     {
-        var categories = new (string Name, string Slug, string Icon, int Sort)[]
+        var categories = new (string Name, string Slug, string IconKey, int Sort)[]
         {
-            ("Vehicles", "vehicles", "/icons/vehicles.svg", 1),
-            ("Property", "property", "/icons/property.svg", 2),
-            ("Electronics", "electronics", "/icons/electronics.svg", 3),
-            ("Mobiles", "mobiles", "/icons/mobiles.svg", 4),
-            ("Services", "services", "/icons/services.svg", 5),
-            ("Home & Garden", "home-garden", "/icons/home-garden.svg", 6),
-            ("Business & Industry", "business-industry", "/icons/business.svg", 7),
-            ("Jobs", "jobs", "/icons/jobs.svg", 8),
-            ("Animals", "animals", "/icons/animals.svg", 9),
-            ("Hobby, Sport & Kids", "hobby-sport-kids", "/icons/hobby.svg", 10),
-            ("Fashion & Beauty", "fashion-beauty", "/icons/fashion.svg", 11),
-            ("Education", "education", "/icons/education.svg", 12),
-            ("Essentials", "essentials", "/icons/essentials.svg", 13),
-            ("Agriculture", "agriculture", "/icons/agriculture.svg", 14),
-            ("Work Overseas", "work-overseas", "/icons/overseas.svg", 15),
-            ("Other", "other", "/icons/other.svg", 16)
+            ("Vehicles", "vehicles", "vehicles", 1),
+            ("Property", "property", "property", 2),
+            ("Mobiles", "mobiles", "mobiles", 3),
+            ("Electronics", "electronics", "electronics", 4),
+            ("Services", "services", "services", 5),
+            ("Home & Garden", "home-garden", "home-garden", 6),
+            ("Business & Industry", "business-industry", "business-industry", 7),
+            ("Jobs", "jobs", "jobs", 8),
+            ("Animals", "animals", "animals", 9),
+            ("Hobby, Sport & Kids", "hobby-sport-kids", "hobby-sport-kids", 10),
+            ("Fashion & Beauty", "fashion-beauty", "fashion-beauty", 11),
+            ("Essentials", "essentials", "essentials", 12),
+            ("Education", "education", "education", 13),
+            ("Agriculture", "agriculture", "agriculture", 14),
+            ("Work Overseas", "work-overseas", "work-overseas", 15),
+            ("Other", "other", "other", 16)
         };
 
-        foreach (var (name, slug, icon, sort) in categories)
+        foreach (var (name, slug, iconKey, sort) in categories)
         {
             var id = Guid.NewGuid();
             categoryIds[slug] = id;
@@ -62,8 +65,10 @@ public static class DatabaseSeeder
             await connection.ExecuteAsync(@"
                 INSERT INTO Categories (Id, Name, Slug, IconUrl, SortOrder, IsActive, CreatedAt)
                 VALUES (@Id, @Name, @Slug, @IconUrl, @SortOrder, 1, @CreatedAt)",
-                new { Id = id, Name = name, Slug = slug, IconUrl = icon, SortOrder = sort, CreatedAt = now });
+                new { Id = id, Name = name, Slug = slug, IconUrl = iconKey, SortOrder = sort, CreatedAt = now });
         }
+
+        await EnsureSubCategoriesAsync(connection, categoryIds, now);
 
         await SeedAttributeAsync(connection, categoryIds["property"], "bedrooms", "Bedrooms", (int)AttributeFieldType.Number, null, false, true, 1, now);
         await SeedAttributeAsync(connection, categoryIds["property"], "bathrooms", "Bathrooms", (int)AttributeFieldType.Number, null, false, true, 2, now);
@@ -301,6 +306,67 @@ public static class DatabaseSeeder
                     AltText = title,
                     CreatedAt = publishedAt
                 });
+        }
+    }
+
+    private static async Task EnsureCategoryIconsAsync(
+        IDbConnection connection,
+        Dictionary<string, Guid> categoryIds)
+    {
+        foreach (var (slug, iconKey) in CategorySubcategorySeedData.ParentIconKeys)
+        {
+            if (!categoryIds.ContainsKey(slug))
+            {
+                continue;
+            }
+
+            await connection.ExecuteAsync(@"
+                UPDATE Categories SET IconUrl = @IconUrl
+                WHERE Slug = @Slug AND (IconUrl IS NULL OR IconUrl LIKE '/icons/%')",
+                new { Slug = slug, IconUrl = iconKey });
+        }
+    }
+
+    private static async Task EnsureSubCategoriesAsync(
+        IDbConnection connection,
+        Dictionary<string, Guid> categoryIds,
+        DateTime now)
+    {
+        var subCount = await connection.ExecuteScalarAsync<int>(
+            "SELECT COUNT(1) FROM Categories WHERE ParentCategoryId IS NOT NULL");
+
+        if (subCount > 0)
+        {
+            return;
+        }
+
+        foreach (var (parentSlug, subcategories) in CategorySubcategorySeedData.ByParent)
+        {
+            if (!categoryIds.TryGetValue(parentSlug, out var parentId))
+            {
+                continue;
+            }
+
+            foreach (var sub in subcategories)
+            {
+                var id = Guid.NewGuid();
+                var description = sub.SearchTerm is null ? null : $"search:{sub.SearchTerm}";
+
+                await connection.ExecuteAsync(@"
+                    INSERT INTO Categories (Id, Name, Slug, Description, IconUrl, ParentCategoryId, SortOrder, IsActive, CreatedAt)
+                    VALUES (@Id, @Name, @Slug, @Description, @IconUrl, @ParentCategoryId, @SortOrder, 1, @CreatedAt)",
+                    new
+                    {
+                        Id = id,
+                        sub.Name,
+                        sub.Slug,
+                        Description = description,
+                        IconUrl = sub.IconKey,
+                        ParentCategoryId = parentId,
+                        SortOrder = sub.Sort,
+                        CreatedAt = now
+                    });
+            }
         }
     }
 

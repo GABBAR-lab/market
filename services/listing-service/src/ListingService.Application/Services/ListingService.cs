@@ -11,15 +11,18 @@ public class ListingService : IListingService
     private readonly IListingRepository _listingRepository;
     private readonly ICategoryRepository _categoryRepository;
     private readonly ILocationRepository _locationRepository;
+    private readonly IAppSettingsRepository _appSettingsRepository;
 
     public ListingService(
         IListingRepository listingRepository,
         ICategoryRepository categoryRepository,
-        ILocationRepository locationRepository)
+        ILocationRepository locationRepository,
+        IAppSettingsRepository appSettingsRepository)
     {
         _listingRepository = listingRepository;
         _categoryRepository = categoryRepository;
         _locationRepository = locationRepository;
+        _appSettingsRepository = appSettingsRepository;
     }
 
     public async Task<Result<ListingDetailResponse>> CreateAsync(Guid sellerId, CreateListingRequest request)
@@ -28,6 +31,48 @@ public class ListingService : IListingService
         if (category is null || !category.IsActive)
         {
             return Result<ListingDetailResponse>.Failure("Category not found.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Title) || request.Title.Length > 150)
+        {
+            return Result<ListingDetailResponse>.Failure("Title is required and must be at most 150 characters.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.ListingPurpose))
+        {
+            return Result<ListingDetailResponse>.Failure("Main category (Sale/Buy/Rent) is required.");
+        }
+
+        if (!IsValidSlMobile(request.MobilePhone))
+        {
+            return Result<ListingDetailResponse>.Failure("Mobile number must be a valid 10-digit Sri Lankan number.");
+        }
+
+        if (!IsValidSlMobile(request.WhatsAppPhone))
+        {
+            return Result<ListingDetailResponse>.Failure("WhatsApp number must be a valid 10-digit Sri Lankan number.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Province) || string.IsNullOrWhiteSpace(request.District))
+        {
+            return Result<ListingDetailResponse>.Failure("Province and district are required.");
+        }
+
+        if (request.AdDurationDays < 1 || request.AdDurationDays > 365)
+        {
+            return Result<ListingDetailResponse>.Failure("Ad duration must be between 1 and 365 days.");
+        }
+
+        var minImages = await _appSettingsRepository.GetIntAsync("MinImagesPerListing", 4);
+        var maxImages = await _appSettingsRepository.GetIntAsync("MaxImagesPerListing", 10);
+        var imageCount = request.Images?.Count ?? 0;
+        if (imageCount < minImages)
+        {
+            return Result<ListingDetailResponse>.Failure($"At least {minImages} photos are required.");
+        }
+        if (imageCount > maxImages)
+        {
+            return Result<ListingDetailResponse>.Failure($"Maximum {maxImages} photos allowed.");
         }
 
         if (await _listingRepository.SlugExistsAsync(request.Slug))
@@ -54,12 +99,20 @@ public class ListingService : IListingService
             return Result<ListingDetailResponse>.Failure(conditionError!);
         }
 
+        var perDay = request.ListingPurpose.Trim().ToLowerInvariant() switch
+        {
+            "buy" => category.PerDayPriceBuy,
+            "rent" => category.PerDayPriceRent,
+            _ => category.PerDayPriceSale
+        };
+        var paymentAmount = perDay * request.AdDurationDays;
+
         var listing = Listing.Create(
             sellerId,
             request.CategoryId,
-            request.Title,
+            request.Title.Trim(),
             request.Slug,
-            request.Description,
+            request.Description.Trim(),
             request.Price,
             request.Currency,
             priceType,
@@ -69,11 +122,22 @@ public class ListingService : IListingService
             request.District,
             request.Province,
             request.Country,
-            request.ContactPhone,
+            NormalizePhone(request.MobilePhone),
             request.ContactEmail,
             request.ShowPhone,
             request.ShowEmail,
-            request.ExpiresAt);
+            null);
+
+        listing.ApplyPostAdDetails(
+            request.ListingPurpose,
+            NormalizePhone(request.MobilePhone),
+            NormalizePhone(request.WhatsAppPhone),
+            request.Address,
+            request.AdDurationDays,
+            request.Latitude,
+            request.Longitude);
+
+        listing.SetPendingPayment(paymentAmount);
 
         if (request.Images is not null)
         {
@@ -106,6 +170,40 @@ public class ListingService : IListingService
 
         var created = await _listingRepository.GetByIdAsync(listing.Id, includeDetails: true);
         return Result<ListingDetailResponse>.Success(MapToDetailResponse(created!));
+    }
+
+    private static bool IsValidSlMobile(string? phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone))
+        {
+            return false;
+        }
+
+        var digits = new string(phone.Where(char.IsDigit).ToArray());
+        if (digits.StartsWith("94"))
+        {
+            digits = digits[2..];
+        }
+        if (digits.StartsWith('0'))
+        {
+            digits = digits[1..];
+        }
+
+        return digits.Length == 9 && digits[0] is >= '1' and <= '9';
+    }
+
+    private static string NormalizePhone(string phone)
+    {
+        var digits = new string(phone.Where(char.IsDigit).ToArray());
+        if (digits.StartsWith("94"))
+        {
+            return $"+{digits}";
+        }
+        if (digits.StartsWith('0'))
+        {
+            return $"+94{digits[1..]}";
+        }
+        return $"+94{digits}";
     }
 
     public async Task<Result<ListingDetailResponse>> GetByIdAsync(Guid id)

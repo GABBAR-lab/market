@@ -1,3 +1,4 @@
+using ListingService.Application.DTOs.Payments;
 using ListingService.Domain.Entities;
 
 namespace ListingService.Application.Interfaces;
@@ -13,4 +14,6 @@ public interface ICategoryRepository
     Task UpdateAsync(Category category);
     Task<bool> SlugExistsAsync(string slug, Guid? excludeId = null);
     Task<int> GetListingCountAsync(Guid categoryId);
+    Task<IReadOnlyList<CategoryPricingResponse>> GetRootCategoryPricingAsync();
+    Task<CategoryPricingResponse?> UpdatePricingAsync(Guid categoryId, decimal sale, decimal buy, decimal rent);
 }

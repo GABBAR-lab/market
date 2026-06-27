@@ -14,6 +14,11 @@ import { ProfileService } from '../../core/services/profile.service';
       <div class="absolute inset-0 opacity-15 bg-hero-property bg-cover bg-center"></div>
 
       <div class="premium-card relative w-full max-w-lg p-8 sm:p-10">
+        <img
+          src="/images/living-lanka-logo.png"
+          alt="Living Lanka"
+          class="mx-auto mb-4 h-16 w-auto object-contain"
+        />
         <h1 class="text-2xl font-bold text-maroon-900">Create Account</h1>
         <p class="mt-1 text-sm text-gray-500">Join Sri Lanka's premium marketplace</p>
 

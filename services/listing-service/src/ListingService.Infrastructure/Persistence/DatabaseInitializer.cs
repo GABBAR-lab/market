@@ -27,6 +27,7 @@ public class DatabaseInitializer
         connection.Open();
 
         await ApplyScriptAsync(connection, "001_InitialSchema.sql");
+        await ApplyScriptAsync(connection, "002_PostAdModule.sql");
         await DatabaseSeeder.SeedAsync(connection);
     }
 

@@ -1,5 +1,6 @@
-import { CategoryResponse, ListingResponse } from '../models/api.models';
-import { Category, PropertyListing } from '../models/marketplace.models';
+import { CategoryResponse, CategoryTreeNodeResponse, ListingDetailResponse, ListingResponse } from '../models/api.models';
+import { Category, CategoryTreeNode, PropertyListing } from '../models/marketplace.models';
+import { iconKeyFromCategory } from '../data/category-icons';
 
 const SLUG_ICON_MAP: Record<string, string> = {
   vehicles: 'car',
@@ -28,13 +29,27 @@ export function slugToIcon(slug: string): string {
 }
 
 export function mapCategory(c: CategoryResponse): Category {
+  const iconKey = iconKeyFromCategory(c.slug, c.iconUrl);
   return {
     id: c.id,
     title: c.name,
     subtitle: `${c.listingCount.toLocaleString()} ads`,
-    icon: slugToIcon(c.slug),
+    icon: SLUG_ICON_MAP[c.slug] ?? iconKey,
+    iconUrl: c.iconUrl ?? iconKey,
     slug: c.slug,
     adCount: c.listingCount,
+  };
+}
+
+export function mapCategoryTreeNode(node: CategoryTreeNodeResponse): CategoryTreeNode {
+  return {
+    id: node.id,
+    name: node.name,
+    slug: node.slug,
+    iconUrl: node.iconUrl ?? node.slug,
+    listingCount: node.listingCount,
+    searchTerm: node.searchTerm,
+    subCategories: node.subCategories.map(mapCategoryTreeNode),
   };
 }
 
@@ -66,6 +81,21 @@ export function mapListing(l: ListingResponse): PropertyListing {
     showEmail: l.showEmail,
     priceType: l.priceType,
     condition: l.condition,
+    publishedAt: l.publishedAt,
+  };
+}
+
+export function mapListingDetail(l: ListingDetailResponse): PropertyListing {
+  const base = mapListing(l);
+  const imageUrls = (l.images ?? [])
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((img) => img.url);
+  return {
+    ...base,
+    imageUrls: imageUrls.length ? imageUrls : [base.imageUrl],
+    imageUrl: imageUrls[0] ?? base.imageUrl,
+    latitude: l.latitude,
+    longitude: l.longitude,
   };
 }
 
