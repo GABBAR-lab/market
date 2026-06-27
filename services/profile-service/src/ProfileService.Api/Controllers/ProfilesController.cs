@@ -43,6 +43,19 @@ public class ProfilesController : ControllerBase
         return Ok(result.Value);
     }
 
+    [HttpGet("public/seller/{userId:guid}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetPublicSeller(Guid userId)
+    {
+        var result = await _profileService.GetPublicSellerProfileAsync(userId);
+        if (!result.IsSuccess)
+        {
+            return NotFound(new { error = result.Error });
+        }
+
+        return Ok(result.Value);
+    }
+
     [HttpGet("{id:guid}")]
     [Authorize]
     public async Task<IActionResult> GetById(Guid id)

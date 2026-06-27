@@ -4,24 +4,27 @@ import { FormsModule } from '@angular/forms';
 import { IkmanAdCardComponent } from '../../shared/components/ikman-ad-card/ikman-ad-card.component';
 import { ListingApiService } from '../../core/services/listing-api.service';
 import { PropertyListing, SearchFilters } from '../../core/models/marketplace.models';
+import { SRI_LANKA_PROVINCES } from '../../core/data/sri-lanka-locations';
+
+const CONDITIONS = ['New', 'Used', 'Refurbished'];
 
 @Component({
   selector: 'app-search',
   imports: [RouterLink, FormsModule, IkmanAdCardComponent],
   template: `
-    <div class="page-hero">
+    <div class="ll-page-hero py-8">
       <div class="section-container">
-        <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">Search listings</h1>
+        <h1 class="text-2xl font-bold text-white sm:text-3xl">Search listings</h1>
         <form class="mt-4 flex gap-2" (submit)="applySearch($event)">
           <input
             type="search"
             [(ngModel)]="queryInput"
             name="q"
-            class="input-pro flex-1"
+            class="ll-search-input flex-1"
             placeholder="What are you looking for?"
             aria-label="Search query"
           />
-          <button type="submit" class="btn-brand shrink-0">Search</button>
+          <button type="submit" class="ll-btn-primary shrink-0 px-6">Search</button>
         </form>
       </div>
     </div>
@@ -40,6 +43,26 @@ import { PropertyListing, SearchFilters } from '../../core/models/marketplace.mo
                 <option value="oldest">Oldest first</option>
                 <option value="price_asc">Price: Low to High</option>
                 <option value="price_desc">Price: High to Low</option>
+              </select>
+            </div>
+
+            <div class="mt-4">
+              <label class="mb-1.5 block text-sm font-medium text-gray-700">Province</label>
+              <select class="select-pro" [(ngModel)]="province" (ngModelChange)="applyFilters()" name="province">
+                <option value="">All Sri Lanka</option>
+                @for (p of provinces; track p.name) {
+                  <option [value]="p.name">{{ p.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="mt-4">
+              <label class="mb-1.5 block text-sm font-medium text-gray-700">Condition</label>
+              <select class="select-pro" [(ngModel)]="condition" (ngModelChange)="applyFilters()" name="condition">
+                <option value="">Any condition</option>
+                @for (c of conditions; track c) {
+                  <option [value]="c">{{ c }}</option>
+                }
               </select>
             </div>
 
@@ -114,14 +137,20 @@ export class SearchComponent implements OnInit {
 
   queryInput = '';
   sortBy: SearchFilters['sortBy'] = 'newest';
+  province = '';
+  condition = '';
   minPrice?: number;
   maxPrice?: number;
+  readonly provinces = SRI_LANKA_PROVINCES;
+  readonly conditions = CONDITIONS;
   private filters: SearchFilters = {};
 
   ngOnInit(): void {
     this.route.queryParamMap.subscribe((params) => {
       this.queryInput = params.get('query') ?? '';
       this.sortBy = (params.get('sortBy') as SearchFilters['sortBy']) ?? 'newest';
+      this.province = params.get('province') ?? '';
+      this.condition = params.get('condition') ?? '';
       const min = params.get('minPrice');
       const max = params.get('maxPrice');
       this.minPrice = min ? Number(min) : undefined;
@@ -129,7 +158,8 @@ export class SearchComponent implements OnInit {
 
       this.filters = {
         query: this.queryInput || undefined,
-        province: params.get('province') ?? undefined,
+        province: this.province || undefined,
+        condition: this.condition || undefined,
         city: params.get('city') ?? undefined,
         category: params.get('category') ?? undefined,
         categoryId: params.get('categoryId') ?? undefined,
@@ -149,6 +179,8 @@ export class SearchComponent implements OnInit {
       queryParams: {
         query: this.queryInput || null,
         sortBy: this.sortBy,
+        province: this.province || null,
+        condition: this.condition || null,
         minPrice: this.minPrice ?? null,
         maxPrice: this.maxPrice ?? null,
       },
@@ -160,6 +192,8 @@ export class SearchComponent implements OnInit {
     this.router.navigate(['/search'], {
       queryParams: {
         sortBy: this.sortBy,
+        province: this.province || null,
+        condition: this.condition || null,
         minPrice: this.minPrice ?? null,
         maxPrice: this.maxPrice ?? null,
       },
@@ -169,6 +203,8 @@ export class SearchComponent implements OnInit {
 
   clearFilters(): void {
     this.sortBy = 'newest';
+    this.province = '';
+    this.condition = '';
     this.minPrice = undefined;
     this.maxPrice = undefined;
     this.router.navigate(['/search'], { queryParams: { query: this.queryInput || null } });

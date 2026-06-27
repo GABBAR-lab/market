@@ -5,6 +5,8 @@ public record ListingSearchRequest(
     Guid? CategoryId,
     Guid? LocationId,
     string? City,
+    string? Province,
+    string? Condition,
     decimal? MinPrice,
     decimal? MaxPrice,
     string? Status,

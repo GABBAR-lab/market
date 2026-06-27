@@ -9,14 +9,14 @@ import { ToastService } from '../../../core/services/toast.service';
   selector: 'app-ikman-ad-card',
   imports: [RouterLink, DecimalPipe],
   template: `
-    <article class="ad-card-pro group">
-      <a [routerLink]="['/listing', listing.id]" class="relative block overflow-hidden rounded-lg bg-gray-100">
+    <article class="ad-card-olx group">
+      <a [routerLink]="['/listing', listing.id]" class="relative block aspect-[4/3] overflow-hidden bg-gray-100">
         @if (listing.isFeatured) {
-          <span class="badge-featured absolute left-0 top-0 z-10">Featured</span>
+          <span class="badge-featured absolute left-2 top-2 z-10">Featured</span>
         }
         <button
           type="button"
-          class="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 shadow-sm transition hover:scale-110"
+          class="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow"
           [class.text-red-500]="saved()"
           [class.text-gray-400]="!saved()"
           (click)="toggleSave($event)"
@@ -29,29 +29,27 @@ import { ToastService } from '../../../core/services/toast.service';
         <img
           [src]="listing.imageUrl"
           [alt]="listing.title"
-          class="aspect-[4/3] w-full object-cover transition group-hover:scale-105"
+          class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
           loading="lazy"
         />
       </a>
-      <a [routerLink]="['/listing', listing.id]" class="mt-2 block space-y-1 p-1">
-        <h3 class="line-clamp-2 text-sm font-semibold text-gray-900 group-hover:text-maroon-800">
-          {{ listing.title }}
-        </h3>
-        <p class="text-xs text-gray-500">
-          @if (showMember) {
-            <span class="mr-1 font-semibold uppercase text-teal-700">Member</span>
-          }
-          {{ listing.location }}
-          @if (listing.category) {
-            <span>, {{ listing.category }}</span>
+      <a [routerLink]="['/listing', listing.id]" class="flex flex-1 flex-col p-3">
+        <p class="text-base font-bold text-gray-900">
+          @if (listing.price > 0) {
+            Rs {{ listing.price | number:'1.0-0' }}
+          } @else {
+            <span class="text-sm">Contact for price</span>
           }
         </p>
-        @if (listing.price > 0) {
-          <p class="text-sm font-bold text-gray-900">Rs {{ listing.price | number:'1.0-0' }}</p>
-        }
-        @if (listing.postedAt) {
-          <p class="text-xs text-gray-400">{{ listing.postedAt }}</p>
-        }
+        <h3 class="mt-1 line-clamp-2 text-sm text-gray-700 group-hover:text-maroon-900">
+          {{ listing.title }}
+        </h3>
+        <p class="mt-auto pt-2 text-xs text-gray-400">
+          {{ listing.location }}
+          @if (listing.postedAt) {
+            <span> · {{ listing.postedAt }}</span>
+          }
+        </p>
       </a>
     </article>
   `,
@@ -71,8 +69,12 @@ export class IkmanAdCardComponent implements OnInit {
   toggleSave(e: Event): void {
     e.preventDefault();
     e.stopPropagation();
-    const added = this.favorites.toggle(this.listing.id);
-    this.saved.set(added);
-    this.toast.show(added ? 'Saved to your list' : 'Removed from saved', added ? 'success' : 'info');
+    this.favorites.toggle(this.listing.id).subscribe({
+      next: (added) => {
+        this.saved.set(added);
+        this.toast.show(added ? 'Saved to your list' : 'Removed from saved', added ? 'success' : 'info');
+      },
+      error: () => this.toast.error('Could not update saved list'),
+    });
   }
 }

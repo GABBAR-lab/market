@@ -67,8 +67,21 @@ public class ListingRepository : IListingRepository
 
         if (!string.IsNullOrWhiteSpace(request.City))
         {
-            where.Append(" AND l.City = @City");
+            where.Append(" AND (l.City = @City OR l.District = @City)");
             parameters.Add("City", request.City.Trim());
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Province))
+        {
+            where.Append(" AND l.Province = @Province");
+            parameters.Add("Province", request.Province.Trim());
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Condition) &&
+            Enum.TryParse<ListingCondition>(request.Condition, true, out var condition))
+        {
+            where.Append(" AND l.Condition = @Condition");
+            parameters.Add("Condition", (int)condition);
         }
 
         if (request.MinPrice.HasValue)

@@ -8,6 +8,7 @@ public interface IProfileService
     Task<Result<ProfileResponse>> CreateAsync(CreateProfileRequest request);
     Task<Result<ProfileResponse>> GetByIdAsync(Guid id);
     Task<Result<ProfileResponse>> GetByUserIdAsync(Guid userId);
+    Task<Result<PublicSellerProfileResponse>> GetPublicSellerProfileAsync(Guid userId);
     Task<Result<IReadOnlyList<ProfileResponse>>> GetAllAsync();
     Task<Result<ProfileResponse>> UpdateAsync(Guid id, UpdateProfileRequest request);
     Task<Result<bool>> DeleteAsync(Guid id);

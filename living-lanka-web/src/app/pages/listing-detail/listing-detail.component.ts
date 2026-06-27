@@ -1,16 +1,28 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DecimalPipe, TitleCasePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ListingApiService } from '../../core/services/listing-api.service';
 import { FavoritesService } from '../../core/services/favorites.service';
+import { RecentlyViewedService } from '../../core/services/recently-viewed.service';
 import { ToastService } from '../../core/services/toast.service';
 import { PropertyListing } from '../../core/models/marketplace.models';
 import { ImageGalleryComponent } from '../../shared/components/image-gallery/image-gallery.component';
 import { IkmanAdCardComponent } from '../../shared/components/ikman-ad-card/ikman-ad-card.component';
 
+const REPORT_REASONS = ['Spam', 'Fraud', 'WrongCategory', 'Duplicate', 'Offensive', 'Other'];
+const REPORT_LABELS: Record<string, string> = {
+  Spam: 'Spam',
+  Fraud: 'Fraud / Scam',
+  WrongCategory: 'Wrong category',
+  Duplicate: 'Duplicate ad',
+  Offensive: 'Offensive content',
+  Other: 'Other',
+};
+
 @Component({
   selector: 'app-listing-detail',
-  imports: [RouterLink, DecimalPipe, TitleCasePipe, ImageGalleryComponent, IkmanAdCardComponent],
+  imports: [RouterLink, DecimalPipe, TitleCasePipe, FormsModule, ImageGalleryComponent, IkmanAdCardComponent],
   template: `
     @if (loading()) {
       <div class="section-container py-12">
@@ -34,12 +46,12 @@ import { IkmanAdCardComponent } from '../../shared/components/ikman-ad-card/ikma
         </div>
       </div>
     } @else if (listing(); as item) {
-      <div class="bg-gradient-to-b from-maroon-950 to-maroon-900 py-8 text-white">
+      <div class="ll-page-hero py-6">
         <div class="section-container">
           <nav class="breadcrumbs text-sm text-white/70">
             <ul>
-              <li><a routerLink="/" class="hover:text-white">Home</a></li>
-              <li><a [routerLink]="['/category', categorySlug()]" class="hover:text-white">{{ item.category }}</a></li>
+              <li><a routerLink="/" class="hover:text-gold-400">Home</a></li>
+              <li><a [routerLink]="['/category', categorySlug()]" class="hover:text-gold-400">{{ item.category }}</a></li>
               <li class="text-white">{{ item.title }}</li>
             </ul>
           </nav>
@@ -77,7 +89,7 @@ import { IkmanAdCardComponent } from '../../shared/components/ikman-ad-card/ikma
 
               <h1 class="mt-4 text-2xl font-bold leading-tight text-gray-900 sm:text-3xl">{{ item.title }}</h1>
 
-              <p class="mt-4 text-3xl font-extrabold text-maroon-800">
+              <p class="mt-4 text-3xl font-extrabold text-maroon-900">
                 @if (item.price > 0) {
                   Rs {{ item.price | number:'1.0-0' }}
                 } @else {
@@ -97,6 +109,16 @@ import { IkmanAdCardComponent } from '../../shared/components/ikman-ad-card/ikma
                 <p class="mt-2 text-xs text-gray-400">{{ item.viewCount }} people viewed this ad</p>
               }
 
+              @if (item.sellerId) {
+                <a [routerLink]="['/seller', item.sellerId]" class="mt-4 flex items-center gap-3 rounded-xl border border-gray-200 p-3 transition hover:bg-gray-50">
+                  <div class="flex h-10 w-10 items-center justify-center rounded-full bg-gold-500 text-sm font-bold text-maroon-950">S</div>
+                  <div>
+                    <p class="text-sm font-semibold text-gray-900">View seller profile</p>
+                    <p class="text-xs text-gray-500">See all ads from this seller</p>
+                  </div>
+                </a>
+              }
+
               <div class="mt-6 space-y-2">
                 @if (item.showPhone && item.contactPhone) {
                   <a [href]="whatsappLink(item.contactPhone)" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-block gap-2 rounded-xl">
@@ -111,11 +133,16 @@ import { IkmanAdCardComponent } from '../../shared/components/ikman-ad-card/ikma
                 @if (item.showEmail && item.contactEmail) {
                   <a [href]="'mailto:' + item.contactEmail" class="btn btn-outline btn-block rounded-xl">Email Seller</a>
                 }
+                <button type="button" class="btn btn-outline btn-block rounded-xl" (click)="showInquiry.set(true)">Send message to seller</button>
               </div>
 
               <div class="mt-6 rounded-xl bg-amber-50 p-4 text-xs leading-relaxed text-amber-900">
                 <strong class="font-semibold">Safety tip:</strong> Meet in a public place, inspect items before paying, and never share OTP or bank PINs.
               </div>
+
+              <button type="button" class="mt-4 w-full text-center text-xs text-gray-400 underline hover:text-gray-600" (click)="showReport.set(true)">
+                Report this ad
+              </button>
             </div>
           </div>
         </div>
@@ -137,6 +164,52 @@ import { IkmanAdCardComponent } from '../../shared/components/ikman-ad-card/ikma
         }
       </div>
     }
+
+    @if (showReport()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" (click)="showReport.set(false)">
+        <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl" (click)="$event.stopPropagation()">
+          <h3 class="text-lg font-bold text-gray-900">Report this ad</h3>
+          <p class="mt-1 text-sm text-gray-500">Help us keep the marketplace safe.</p>
+          <div class="mt-4">
+            <label class="mb-1 block text-sm font-medium text-gray-700">Reason</label>
+            <select class="select-pro w-full" [(ngModel)]="reportReason" name="reason">
+              @for (r of reportReasons; track r) {
+                <option [value]="r">{{ reportLabels[r] }}</option>
+              }
+            </select>
+          </div>
+          <div class="mt-4">
+            <label class="mb-1 block text-sm font-medium text-gray-700">Details (optional)</label>
+            <textarea class="input-pro w-full" rows="3" [(ngModel)]="reportComment" name="comment" placeholder="Tell us more..."></textarea>
+          </div>
+          <div class="mt-6 flex gap-3">
+            <button type="button" class="btn flex-1" (click)="showReport.set(false)">Cancel</button>
+            <button type="button" class="ll-btn-primary flex-1" [disabled]="reporting()" (click)="submitReport()">
+              {{ reporting() ? 'Sending...' : 'Submit report' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (showInquiry()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" (click)="showInquiry.set(false)">
+        <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl" (click)="$event.stopPropagation()">
+          <h3 class="text-lg font-bold text-gray-900">Message seller</h3>
+          <div class="mt-4 space-y-3">
+            <input class="input-pro" [(ngModel)]="inquiryName" name="inquiryName" placeholder="Your name" />
+            <input class="input-pro" [(ngModel)]="inquiryPhone" name="inquiryPhone" placeholder="Mobile number" />
+            <textarea class="input-pro" rows="4" [(ngModel)]="inquiryMessage" name="inquiryMessage" placeholder="I'm interested in this ad..."></textarea>
+          </div>
+          <div class="mt-6 flex gap-3">
+            <button type="button" class="btn flex-1" (click)="showInquiry.set(false)">Cancel</button>
+            <button type="button" class="ll-btn-primary flex-1" [disabled]="sendingInquiry()" (click)="submitInquiry()">
+              {{ sendingInquiry() ? 'Sending...' : 'Send' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `,
 })
 export class ListingDetailComponent implements OnInit {
@@ -144,6 +217,7 @@ export class ListingDetailComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly api = inject(ListingApiService);
   private readonly favorites = inject(FavoritesService);
+  private readonly recentlyViewed = inject(RecentlyViewedService);
   private readonly toast = inject(ToastService);
 
   readonly listing = signal<PropertyListing | null>(null);
@@ -152,6 +226,17 @@ export class ListingDetailComponent implements OnInit {
   readonly error = signal('');
   readonly categorySlug = signal('all');
   readonly isSaved = signal(false);
+  readonly showReport = signal(false);
+  readonly showInquiry = signal(false);
+  readonly reporting = signal(false);
+  readonly sendingInquiry = signal(false);
+  readonly reportReasons = REPORT_REASONS;
+  readonly reportLabels = REPORT_LABELS;
+  reportReason = REPORT_REASONS[0];
+  reportComment = '';
+  inquiryName = '';
+  inquiryPhone = '';
+  inquiryMessage = '';
 
   readonly galleryImages = computed(() => {
     const item = this.listing();
@@ -170,6 +255,7 @@ export class ListingDetailComponent implements OnInit {
           this.listing.set(item);
           this.categorySlug.set(item.category.toLowerCase().replace(/\s+/g, '-'));
           this.isSaved.set(this.favorites.isSaved(item.id));
+          this.recentlyViewed.add(item.id);
           this.loading.set(false);
           this.updatePageTitle(item.title);
           this.api.incrementViewCount(id).subscribe();
@@ -186,9 +272,13 @@ export class ListingDetailComponent implements OnInit {
   toggleSave(): void {
     const item = this.listing();
     if (!item) return;
-    const added = this.favorites.toggle(item.id);
-    this.isSaved.set(added);
-    this.toast.show(added ? 'Saved to your list' : 'Removed from saved', added ? 'success' : 'info');
+    this.favorites.toggle(item.id).subscribe({
+      next: (added) => {
+        this.isSaved.set(added);
+        this.toast.show(added ? 'Saved to your list' : 'Removed from saved', added ? 'success' : 'info');
+      },
+      error: () => this.toast.error('Could not update saved list'),
+    });
   }
 
   shareListing(): void {
@@ -207,6 +297,50 @@ export class ListingDetailComponent implements OnInit {
     const digits = phone.replace(/\D/g, '');
     const msg = encodeURIComponent(`Hi, I'm interested in: ${this.listing()?.title ?? 'your ad'}`);
     return `https://wa.me/${digits}?text=${msg}`;
+  }
+
+  submitReport(): void {
+    const item = this.listing();
+    if (!item || this.reporting()) return;
+    this.reporting.set(true);
+    this.api.reportListing(item.id, this.reportReason, this.reportComment || undefined).subscribe({
+      next: () => {
+        this.reporting.set(false);
+        this.showReport.set(false);
+        this.reportComment = '';
+        this.toast.success('Report submitted. Thank you.');
+      },
+      error: () => {
+        this.reporting.set(false);
+        this.toast.error('Could not submit report. Please try again.');
+      },
+    });
+  }
+
+  submitInquiry(): void {
+    const item = this.listing();
+    if (!item || this.sendingInquiry()) return;
+    if (!this.inquiryName.trim() || !this.inquiryPhone.trim() || !this.inquiryMessage.trim()) {
+      this.toast.error('Please fill name, phone and message.');
+      return;
+    }
+    this.sendingInquiry.set(true);
+    this.api.sendInquiry(item.id, {
+      buyerName: this.inquiryName.trim(),
+      buyerPhone: this.inquiryPhone.trim(),
+      message: this.inquiryMessage.trim(),
+    }).subscribe({
+      next: () => {
+        this.sendingInquiry.set(false);
+        this.showInquiry.set(false);
+        this.inquiryMessage = '';
+        this.toast.success('Message sent to seller!');
+      },
+      error: () => {
+        this.sendingInquiry.set(false);
+        this.toast.error('Could not send message.');
+      },
+    });
   }
 
   private loadRelated(item: PropertyListing): void {

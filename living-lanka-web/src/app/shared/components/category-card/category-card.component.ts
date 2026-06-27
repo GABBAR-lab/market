@@ -20,7 +20,7 @@ import { iconKeyFromCategory } from '../../../core/data/category-icons';
       />
       <div class="min-w-0 flex-1">
         <p
-          class="truncate font-medium text-[#0074ba] group-hover:underline"
+          class="truncate font-medium text-maroon-800 group-hover:underline"
           [class]="variant === 'dark' ? 'text-white group-hover:text-amber-400' : ''"
         >
           {{ category.title }}
@@ -52,14 +52,14 @@ export class CategoryListItemComponent {
   template: `
     <a
       [routerLink]="['/category', category.slug]"
-      class="card group border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-      [class]="variant === 'dark' ? 'border-white/10 bg-white/5 hover:border-gold-500/50' : 'border-gray-200 hover:border-teal-400'"
+      class="card group border border-gray-200 bg-white shadow-sm transition hover:border-maroon-300 hover:shadow-md"
+      [class]="variant === 'dark' ? 'border-white/10 bg-white/5 hover:border-gold-500/50' : ''"
     >
       <div class="card-body items-center p-4 text-center sm:p-6">
         <div class="mb-2 flex h-14 w-14 items-center justify-center">
           <app-category-icon [iconKey]="iconKey" [slug]="category.slug" size="lg" />
         </div>
-        <h3 class="text-sm font-bold text-[#0074ba] sm:text-base">{{ category.title }}</h3>
+        <h3 class="text-sm font-bold text-maroon-900 sm:text-base">{{ category.title }}</h3>
         @if (category.subtitle) {
           <p class="mt-1 text-xs text-gray-500">{{ category.subtitle }}</p>
         }

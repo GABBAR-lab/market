@@ -9,29 +9,14 @@ import { iconKeyFromCategory } from '../../core/data/category-icons';
   selector: 'app-main-nav',
   imports: [RouterLink, CategoryIconComponent],
   template: `
-    <nav class="border-b border-gray-200 bg-white">
+    <nav class="border-b border-gray-200 bg-white shadow-sm">
       <div class="section-container">
-        <div class="flex gap-1 overflow-x-auto py-2">
-          <a
-            routerLink="/categories"
-            class="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold text-[#0074ba] hover:bg-teal-50"
-          >
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-            Categories
-          </a>
-          <a
-            routerLink="/all-ads"
-            class="whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold text-gray-700 hover:bg-teal-50 hover:text-teal-700"
-          >
-            All Ads
+        <div class="flex gap-2 overflow-x-auto py-2.5 scrollbar-hide">
+          <a routerLink="/categories" class="ll-nav-chip font-semibold text-maroon-900">
+            All Categories
           </a>
           @for (item of navItems(); track item.slug) {
-            <a
-              [routerLink]="['/category', item.slug]"
-              class="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-sm text-gray-700 hover:bg-teal-50 hover:text-teal-700"
-            >
+            <a [routerLink]="['/category', item.slug]" class="ll-nav-chip">
               <app-category-icon [iconKey]="item.iconKey" [slug]="item.slug" size="sm" />
               {{ item.label }}
             </a>
@@ -48,7 +33,7 @@ export class MainNavComponent implements OnInit {
   ngOnInit(): void {
     this.api.getCategories().subscribe((cats) => {
       this.navItems.set(
-        cats.slice(0, 10).map((c) => ({
+        cats.slice(0, 12).map((c) => ({
           label: c.title,
           slug: c.slug,
           iconKey: iconKeyFromCategory(c.slug, c.iconUrl ?? c.icon),

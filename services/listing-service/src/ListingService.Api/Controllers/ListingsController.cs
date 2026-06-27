@@ -44,6 +44,13 @@ public class ListingsController : ControllerBase
         return Ok(result.Value);
     }
 
+    [HttpGet("seller/{sellerId:guid}")]
+    public async Task<IActionResult> GetBySeller(Guid sellerId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    {
+        var result = await _listingService.GetSellerListingsAsync(sellerId, page, pageSize);
+        return Ok(result.Value);
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
     {

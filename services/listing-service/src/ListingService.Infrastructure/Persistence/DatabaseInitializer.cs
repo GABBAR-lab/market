@@ -28,6 +28,8 @@ public class DatabaseInitializer
 
         await ApplyScriptAsync(connection, "001_InitialSchema.sql");
         await ApplyScriptAsync(connection, "002_PostAdModule.sql");
+        await ApplyScriptAsync(connection, "003_OlxFeatures.sql");
+        await ApplyScriptAsync(connection, "004_MarketplaceFeatures.sql");
         await DatabaseSeeder.SeedAsync(connection);
     }
 

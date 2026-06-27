@@ -69,6 +69,7 @@ export function mapListing(l: ListingResponse): PropertyListing {
     imageUrl: l.primaryImageUrl || DEFAULT_IMAGE,
     category: l.categoryName,
     categoryId: l.categoryId,
+    sellerId: l.sellerId,
     description: l.description,
     isFeatured: l.isFeatured,
     badge: l.isFeatured ? 'hot' : isNew ? 'new' : undefined,

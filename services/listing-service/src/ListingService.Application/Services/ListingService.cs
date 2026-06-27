@@ -253,6 +253,25 @@ public class ListingService : IListingService
         return Result<IReadOnlyList<ListingResponse>>.Success(listings.Select(MapToResponse).ToList());
     }
 
+    public async Task<Result<PagedResult<ListingResponse>>> GetSellerListingsAsync(Guid sellerId, int page = 1, int pageSize = 20)
+    {
+        var request = new ListingSearchRequest(
+            SearchTerm: null,
+            CategoryId: null,
+            LocationId: null,
+            City: null,
+            Province: null,
+            Condition: null,
+            MinPrice: null,
+            MaxPrice: null,
+            Status: nameof(ListingStatus.Active),
+            IsFeatured: null,
+            SellerId: sellerId,
+            Page: page,
+            PageSize: pageSize);
+        return await SearchAsync(request);
+    }
+
     public async Task<Result<ListingDetailResponse>> UpdateAsync(Guid id, Guid sellerId, bool isAdmin, UpdateListingRequest request)
     {
         var listing = await _listingRepository.GetByIdAsync(id, includeDetails: true);

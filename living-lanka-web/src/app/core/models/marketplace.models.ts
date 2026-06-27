@@ -35,6 +35,7 @@ export interface PropertyListing {
   imageUrls?: string[];
   category: string;
   categoryId?: string;
+  sellerId?: string;
   description?: string;
   postedBy?: string;
   isVerified?: boolean;
@@ -69,7 +70,16 @@ export interface SearchFilters {
   minPrice?: number;
   maxPrice?: number;
   city?: string;
+  condition?: string;
   sortBy?: 'newest' | 'oldest' | 'price_asc' | 'price_desc';
+}
+
+export interface PublicSellerProfile {
+  userId: string;
+  displayName: string;
+  avatarUrl?: string;
+  bio?: string;
+  memberSince: string;
 }
 
 export interface AuthUser {

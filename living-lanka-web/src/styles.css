@@ -1,152 +1,148 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap');
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  html {
-    scroll-behavior: smooth;
-  }
-
-  body {
-    @apply font-sans text-gray-800 antialiased bg-white;
-  }
-
-  *:focus-visible {
-    @apply outline-none ring-2 ring-maroon-600 ring-offset-2;
-  }
-
-  ::selection {
-    @apply bg-maroon-100 text-maroon-950;
-  }
-}
-
-@layer components {
-  .section-container {
-    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
-  }
-
-  .nav-link {
-    @apply flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-maroon-800;
-  }
-
-  .nav-link-active {
-    @apply bg-maroon-50 text-maroon-900 font-semibold;
-  }
-
-  .premium-card {
-    @apply rounded-2xl border border-gray-200/80 bg-white shadow-card;
-  }
-
-  .glass-panel {
-    @apply rounded-2xl border border-white/20 bg-white/10 shadow-2xl backdrop-blur-md;
-  }
-
-  .ikman-ad-card {
-    @apply block transition duration-200;
-  }
-
-  .btn-brand {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-maroon-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-maroon-900 active:scale-[0.98];
-  }
-
-  .btn-brand-outline {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border-2 border-maroon-800 bg-transparent px-5 py-2.5 text-sm font-semibold text-maroon-800 transition hover:bg-maroon-50 active:scale-[0.98];
-  }
-
-  .input-pro {
-    @apply w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm transition placeholder:text-gray-400 hover:border-gray-400 focus:border-maroon-600 focus:ring-2 focus:ring-maroon-600/20;
-  }
-
-  .select-pro {
-    @apply input-pro appearance-none bg-[length:1rem] bg-[right_0.75rem_center] bg-no-repeat pr-10;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
-  }
-
-  .page-hero {
-    @apply border-b border-gray-200 bg-gradient-to-b from-gray-50 to-white py-8 sm:py-10;
-  }
-
-  .badge-new {
-    @apply inline-flex items-center rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800;
-  }
-
-  .badge-featured {
-    @apply inline-flex items-center rounded-md bg-amber-400 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-900;
-  }
-
-  .toast-pro {
-    @apply border bg-white text-gray-900;
-  }
-  .toast-pro-success { @apply border-emerald-200 bg-emerald-50 text-emerald-900; }
-  .toast-pro-error { @apply border-red-200 bg-red-50 text-red-900; }
-  .toast-pro-warning { @apply border-amber-200 bg-amber-50 text-amber-900; }
-  .toast-pro-info { @apply border-blue-200 bg-blue-50 text-blue-900; }
-
-  .btn-scroll-top {
-    @apply fixed bottom-20 right-4 z-40 flex h-11 w-11 items-center justify-center rounded-full bg-maroon-800 text-white shadow-elevated transition hover:bg-maroon-900 hover:scale-105 md:bottom-8;
-  }
-
-  .gallery-nav {
-    @apply absolute top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-gray-800 shadow-md transition hover:bg-white hover:scale-105;
-  }
-  .gallery-nav-prev { @apply left-3; }
-  .gallery-nav-next { @apply right-3; }
-  .gallery-counter {
-    @apply absolute bottom-3 right-3 rounded-full bg-black/60 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm;
-  }
-  .gallery-thumb {
-    @apply h-16 w-20 overflow-hidden rounded-lg border-2 border-transparent opacity-70 transition hover:opacity-100;
-  }
-  .gallery-thumb-active {
-    @apply border-maroon-700 opacity-100 ring-2 ring-maroon-700/30;
-  }
-
-  .mobile-bottom-nav {
-    @apply fixed inset-x-0 bottom-0 z-50 flex items-stretch border-t border-gray-200 bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(0,0,0,0.08)] backdrop-blur-lg md:hidden;
-  }
-  .mobile-nav-item {
-    @apply flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium text-gray-500 transition;
-  }
-  .mobile-nav-item-active {
-    @apply text-maroon-800;
-  }
-  .mobile-nav-fab {
-    @apply -mt-5 flex h-14 w-14 items-center justify-center rounded-full bg-maroon-800 text-white shadow-elevated ring-4 ring-white transition active:scale-95;
-  }
-
-  .ad-card-pro {
-    @apply relative flex h-full flex-col overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-card-hover;
-  }
-
-  .skip-link {
-    @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:rounded-lg focus:bg-maroon-800 focus:px-4 focus:py-2 focus:text-white;
-  }
-}
-
-@layer utilities {
-  .text-balance { text-wrap: balance; }
-
-  .shadow-card {
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
-  }
-  .shadow-card-hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
-  }
-  .shadow-elevated {
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
-  }
-
-  .animate-slide-in {
-    animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(-12px) scale(0.96); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
-  }
-
-  .pb-safe-nav {
-    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
-  }
-}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply font-sans text-gray-800 antialiased bg-[#f2f4f5];
+  }
+
+  *:focus-visible {
+    @apply outline-none ring-2 ring-gold-500 ring-offset-2;
+  }
+
+  ::selection {
+    @apply bg-maroon-100 text-maroon-950;
+  }
+}
+
+@layer components {
+  .section-container {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Living Lanka brand — logo: mahogany + gold/silver */
+  .ll-top-bar {
+    @apply bg-maroon-950 text-white/90;
+  }
+
+  .ll-header {
+    @apply sticky top-0 z-40 border-b border-maroon-900 bg-maroon-950 shadow-lg;
+  }
+
+  .ll-page-hero {
+    @apply bg-maroon-950 py-8 text-white;
+  }
+
+  .ll-search-input {
+    @apply w-full rounded border-0 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gold-500;
+  }
+
+  .ll-btn-sell {
+    @apply inline-flex shrink-0 items-center justify-center rounded bg-gold-500 px-5 py-2.5 text-sm font-extrabold uppercase tracking-wide text-maroon-950 shadow-sm transition hover:bg-gold-400 active:scale-[0.98];
+  }
+
+  .ll-btn-primary {
+    @apply inline-flex items-center justify-center rounded bg-gold-500 px-4 py-2 text-sm font-bold text-maroon-950 transition hover:bg-gold-400;
+  }
+
+  .ll-nav-chip {
+    @apply flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm transition hover:border-maroon-300 hover:text-maroon-900;
+  }
+
+  .ll-trust-strip {
+    @apply border-b border-maroon-900/20 bg-gradient-to-r from-maroon-950 via-maroon-900 to-maroon-950 text-white;
+  }
+
+  .premium-card {
+    @apply rounded-lg border border-gray-200 bg-white shadow-sm;
+  }
+
+  .ikman-ad-card {
+    @apply block transition duration-200;
+  }
+
+  .btn-brand {
+    @apply inline-flex items-center justify-center gap-2 rounded bg-maroon-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-maroon-900 active:scale-[0.98];
+  }
+
+  .btn-brand-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded border-2 border-maroon-800 bg-transparent px-5 py-2.5 text-sm font-semibold text-maroon-800 transition hover:bg-maroon-50 active:scale-[0.98];
+  }
+
+  .input-pro {
+    @apply w-full rounded border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm transition placeholder:text-gray-400 hover:border-gray-400 focus:border-maroon-700 focus:ring-2 focus:ring-maroon-700/20;
+  }
+
+  .select-pro {
+    @apply input-pro appearance-none bg-[length:1rem] bg-[right_0.75rem_center] bg-no-repeat pr-10;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  }
+
+  .badge-featured {
+    @apply inline-flex items-center rounded bg-gold-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-maroon-950;
+  }
+
+  .badge-bump {
+    @apply inline-flex items-center rounded bg-maroon-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white;
+  }
+
+  .toast-pro {
+    @apply border bg-white text-gray-900;
+  }
+  .toast-pro-success { @apply border-emerald-200 bg-emerald-50 text-emerald-900; }
+  .toast-pro-error { @apply border-red-200 bg-red-50 text-red-900; }
+  .toast-pro-warning { @apply border-amber-200 bg-amber-50 text-amber-900; }
+  .toast-pro-info { @apply border-blue-200 bg-blue-50 text-blue-900; }
+
+  .btn-scroll-top {
+    @apply fixed bottom-20 right-4 z-40 flex h-11 w-11 items-center justify-center rounded-full bg-maroon-800 text-white shadow-lg transition hover:bg-maroon-900 hover:scale-105 md:bottom-8;
+  }
+
+  .mobile-bottom-nav {
+    @apply fixed inset-x-0 bottom-0 z-50 flex items-stretch border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(0,0,0,0.08)] md:hidden;
+  }
+  .mobile-nav-item {
+    @apply flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium text-gray-500 transition;
+  }
+  .mobile-nav-item-active {
+    @apply text-maroon-800;
+  }
+  .mobile-nav-fab {
+    @apply -mt-5 flex h-14 w-14 items-center justify-center rounded-full bg-gold-500 text-maroon-950 shadow-lg ring-4 ring-white transition active:scale-95;
+  }
+
+  /* OLX-style flat ad card */
+  .ad-card-olx {
+    @apply flex h-full flex-col overflow-hidden rounded border border-gray-200 bg-white transition hover:shadow-md;
+  }
+
+  .ll-footer {
+    @apply mt-auto border-t border-maroon-900 bg-maroon-950 text-white;
+  }
+}
+
+@layer utilities {
+  .shadow-card {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .pb-safe-nav {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
+
+  .animate-slide-in {
+    animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-12px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+}
+

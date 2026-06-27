@@ -15,6 +15,7 @@ export const routes: Routes = [
       { path: 'saved', loadComponent: () => import('./pages/saved/saved.component').then((m) => m.SavedComponent) },
       { path: 'category/:slug', loadComponent: () => import('./pages/category/category.component').then((m) => m.CategoryComponent) },
       { path: 'listing/:id', loadComponent: () => import('./pages/listing-detail/listing-detail.component').then((m) => m.ListingDetailComponent) },
+      { path: 'seller/:userId', loadComponent: () => import('./pages/seller/seller.component').then((m) => m.SellerComponent) },
       { path: 'post-ad', canActivate: [authGuard], loadComponent: () => import('./pages/post-ad/post-ad.component').then((m) => m.PostAdComponent) },
       { path: 'admin/pricing', canActivate: [authGuard], loadComponent: () => import('./pages/admin/admin-pricing.component').then((m) => m.AdminPricingComponent) },
       { path: 'my-listings', canActivate: [authGuard], loadComponent: () => import('./pages/my-listings/my-listings.component').then((m) => m.MyListingsComponent) },

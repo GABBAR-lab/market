@@ -117,6 +117,34 @@ export class ListingApiService {
     return this.http.delete<{ message: string }>(`${this.listingsBase}/${id}`);
   }
 
+  markAsSold(id: string): Observable<ListingResponse> {
+    return this.http.post<ListingResponse>(`${this.listingsBase}/${id}/sold`, {});
+  }
+
+  getSellerListings(sellerId: string, page = 1, pageSize = 20): Observable<PagedResult<PropertyListing>> {
+    const params = new HttpParams()
+      .set('page', String(page))
+      .set('pageSize', String(pageSize));
+    return this.http
+      .get<PagedResult<ListingResponse>>(`${this.listingsBase}/seller/${sellerId}`, { params })
+      .pipe(map((result) => ({ ...result, items: result.items.map(mapListing) })));
+  }
+
+  reportListing(listingId: string, reason: string, comment?: string): Observable<{ id: string }> {
+    return this.http.post<{ id: string }>(`${environment.apiBaseUrl}/reports/listings/${listingId}`, {
+      reason,
+      comment,
+    });
+  }
+
+  sendInquiry(listingId: string, body: { buyerName: string; buyerPhone: string; message: string }): Observable<{ id: string; message: string }> {
+    return this.http.post<{ id: string; message: string }>(`${environment.apiBaseUrl}/inquiries/listings/${listingId}`, body);
+  }
+
+  getMyInquiries(): Observable<Array<{ id: string; listingId: string; listingTitle: string; buyerName: string; buyerPhone: string; message: string; status: string; createdAt: string }>> {
+    return this.http.get<Array<{ id: string; listingId: string; listingTitle: string; buyerName: string; buyerPhone: string; message: string; status: string; createdAt: string }>>(`${environment.apiBaseUrl}/inquiries/me`);
+  }
+
   getLocations(): Observable<LocationResponse[]> {
     return this.http.get<LocationResponse[]>(this.locationsBase);
   }
@@ -140,8 +168,10 @@ export class ListingApiService {
     if (filters.query) p.searchTerm = filters.query;
     if (filters.categoryId) p.categoryId = filters.categoryId;
     if (filters.city || filters.location || filters.province) {
-      p.city = filters.city ?? filters.location ?? filters.province;
+      p.city = filters.city ?? filters.location;
+      p.province = filters.province ?? filters.location;
     }
+    if (filters.condition) p.condition = filters.condition;
     if (filters.minPrice) p.minPrice = filters.minPrice;
     if (filters.maxPrice) p.maxPrice = filters.maxPrice;
     if (filters.listingType === 'rent') p.searchTerm = (p.searchTerm ?? '') + ' rent';

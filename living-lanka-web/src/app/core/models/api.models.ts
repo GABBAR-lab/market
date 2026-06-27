@@ -100,6 +100,8 @@ export interface ListingSearchParams {
   categoryId?: string;
   locationId?: string;
   city?: string;
+  province?: string;
+  condition?: string;
   minPrice?: number;
   maxPrice?: number;
   status?: string;

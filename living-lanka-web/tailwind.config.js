@@ -22,6 +22,10 @@ module.exports = {
           500: '#c5a059',
           600: '#a8843f',
         },
+        olx: {
+          dark: '#002f34',
+          accent: '#23e5db',
+        },
       },
       fontFamily: {
         serif: ['Georgia', 'Times New Roman', 'serif'],

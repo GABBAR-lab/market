@@ -11,6 +11,7 @@ public interface IListingService
     Task<Result<PagedResult<ListingResponse>>> SearchAsync(ListingSearchRequest request);
     Task<Result<IReadOnlyList<ListingResponse>>> GetFeaturedAsync(int limit = 10);
     Task<Result<IReadOnlyList<ListingResponse>>> GetMyListingsAsync(Guid sellerId);
+    Task<Result<PagedResult<ListingResponse>>> GetSellerListingsAsync(Guid sellerId, int page = 1, int pageSize = 20);
     Task<Result<ListingDetailResponse>> UpdateAsync(Guid id, Guid sellerId, bool isAdmin, UpdateListingRequest request);
     Task<Result<bool>> DeleteAsync(Guid id, Guid sellerId, bool isAdmin);
     Task<Result<ListingDetailResponse>> SubmitForReviewAsync(Guid id, Guid sellerId, bool isAdmin);

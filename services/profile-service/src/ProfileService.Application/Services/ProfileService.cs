@@ -70,6 +70,22 @@ public class ProfileService : IProfileService
         return Result<ProfileResponse>.Success(MapToResponse(profile));
     }
 
+    public async Task<Result<PublicSellerProfileResponse>> GetPublicSellerProfileAsync(Guid userId)
+    {
+        var profile = await _profileRepository.GetByUserIdAsync(userId);
+        if (profile is null || profile.Status != ProfileStatus.Active)
+        {
+            return Result<PublicSellerProfileResponse>.Failure("Seller profile not found.");
+        }
+
+        return Result<PublicSellerProfileResponse>.Success(new PublicSellerProfileResponse(
+            profile.UserId,
+            $"{profile.FirstName} {profile.LastName}".Trim(),
+            profile.AvatarUrl,
+            profile.Bio,
+            profile.CreatedAt));
+    }
+
     public async Task<Result<IReadOnlyList<ProfileResponse>>> GetAllAsync()
     {
         var profiles = await _profileRepository.GetAllAsync();
