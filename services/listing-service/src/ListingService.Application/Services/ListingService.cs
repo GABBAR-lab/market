@@ -396,6 +396,26 @@ public class ListingService : IListingService
         return Result<ListingDetailResponse>.Success(MapToDetailResponse(updated!));
     }
 
+    public async Task<Result<ListingDetailResponse>> ActivateAfterPaymentAsync(Guid id, bool requireApproval)
+    {
+        var listing = await _listingRepository.GetByIdAsync(id, includeDetails: false);
+        if (listing is null || listing.Status == ListingStatus.Deleted)
+        {
+            return Result<ListingDetailResponse>.Failure("Listing not found.");
+        }
+
+        if (listing.Status != ListingStatus.PendingPayment)
+        {
+            return Result<ListingDetailResponse>.Failure("Listing is not awaiting payment.");
+        }
+
+        listing.ActivateAfterPayment(requireApproval);
+        await _listingRepository.UpdateAsync(listing);
+
+        var updated = await _listingRepository.GetByIdAsync(id, includeDetails: true);
+        return Result<ListingDetailResponse>.Success(MapToDetailResponse(updated!));
+    }
+
     public async Task<Result<ListingDetailResponse>> MarkAsSoldAsync(Guid id, Guid sellerId, bool isAdmin)
     {
         var listing = await GetAuthorizedListingAsync(id, sellerId, isAdmin);
@@ -599,6 +619,9 @@ public class ListingService : IListingService
             a.CategoryAttribute?.Name ?? string.Empty,
             a.CategoryAttribute?.DisplayName ?? string.Empty,
             a.Value)).ToList(),
+        listing.ListingPurpose,
+        listing.AdDurationDays,
+        listing.PaymentAmount,
         listing.CreatedAt,
         listing.UpdatedAt);
 

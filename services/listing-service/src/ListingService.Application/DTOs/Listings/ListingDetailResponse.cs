@@ -32,6 +32,9 @@ public record ListingDetailResponse(
     DateTime? ExpiresAt,
     IReadOnlyList<ListingImageResponse> Images,
     IReadOnlyList<ListingAttributeValueResponse> Attributes,
+    string? ListingPurpose,
+    int AdDurationDays,
+    decimal? PaymentAmount,
     DateTime CreatedAt,
     DateTime? UpdatedAt);
 

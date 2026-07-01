@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
 import { ProfileService } from '../../core/services/profile.service';
+import { MediaApiService } from '../../core/services/media-api.service';
+import { ToastService } from '../../core/services/toast.service';
 import { ProfileResponse } from '../../core/models/api.models';
 
 @Component({
@@ -23,14 +25,25 @@ import { ProfileResponse } from '../../core/models/api.models';
       } @else if (profile(); as p) {
         <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div class="premium-card p-6 text-center lg:col-span-1">
-            <div class="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-maroon-800 to-maroon-950 text-3xl font-bold text-gold-400">
-              {{ p.firstName.charAt(0) }}{{ p.lastName.charAt(0) }}
+            <div class="relative mx-auto h-24 w-24">
+              @if (p.avatarUrl) {
+                <img [src]="p.avatarUrl" alt="Avatar" class="h-24 w-24 rounded-full object-cover ring-2 ring-gold-500" />
+              } @else {
+                <div class="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-maroon-800 to-maroon-950 text-3xl font-bold text-gold-400">
+                  {{ p.firstName.charAt(0) }}{{ p.lastName.charAt(0) }}
+                </div>
+              }
             </div>
+            <label class="btn btn-sm btn-outline mt-3 cursor-pointer border-maroon-800 text-maroon-800">
+              Change photo
+              <input type="file" accept="image/*" class="hidden" (change)="onAvatarSelected($event)" />
+            </label>
             <h2 class="mt-4 text-xl font-bold">{{ p.firstName }} {{ p.lastName }}</h2>
             <p class="text-sm text-gray-500">{{ auth.user()?.email }}</p>
             <span class="badge mt-3" [class]="p.status === 'Active' ? 'badge-success' : 'badge-warning'">{{ p.status }}</span>
             <div class="mt-6 space-y-2">
               <a routerLink="/my-listings" class="btn btn-outline btn-block border-maroon-800 text-maroon-800">My Listings</a>
+              <a routerLink="/my-media" class="btn btn-outline btn-block border-maroon-800 text-maroon-800">My Media</a>
               <a routerLink="/post-ad" class="btn btn-block bg-maroon-800 text-white">Post New Ad</a>
             </div>
           </div>
@@ -99,6 +112,8 @@ import { ProfileResponse } from '../../core/models/api.models';
 export class ProfileComponent implements OnInit {
   readonly auth = inject(AuthService);
   private readonly profileService = inject(ProfileService);
+  private readonly mediaApi = inject(MediaApiService);
+  private readonly toast = inject(ToastService);
 
   readonly profile = signal<ProfileResponse | null>(null);
   readonly loading = signal(true);
@@ -165,5 +180,34 @@ export class ProfileComponent implements OnInit {
           this.saving.set(false);
         },
       });
+  }
+
+  onAvatarSelected(event: Event): void {
+    const p = this.profile();
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!p || !file) return;
+
+    this.mediaApi.uploadAvatar(file).subscribe({
+      next: (url) => {
+        this.profileService
+          .update(p.id, {
+            firstName: p.firstName,
+            lastName: p.lastName,
+            avatarUrl: url,
+            currency: p.currency,
+            language: p.language,
+          })
+          .subscribe({
+            next: (updated) => {
+              this.profile.set(updated);
+              this.toast.success('Profile photo updated');
+            },
+            error: () => this.toast.error('Could not save avatar'),
+          });
+      },
+      error: () => this.toast.error('Upload failed'),
+    });
+    input.value = '';
   }
 }

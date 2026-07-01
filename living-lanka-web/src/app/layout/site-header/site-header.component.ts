@@ -92,6 +92,7 @@ import { SRI_LANKA_PROVINCES } from '../../core/data/sri-lanka-locations';
         <div class="flex items-center gap-4 text-white/80">
           <a routerLink="/saved" class="hover:text-gold-400 sm:hidden">Saved</a>
           <a routerLink="/my-listings" class="hover:text-gold-400">My Ads</a>
+          <a routerLink="/my-media" class="hover:text-gold-400">My Media</a>
           <a routerLink="/chat" class="hidden hover:text-gold-400 sm:inline">Chat</a>
         </div>
         <div class="flex items-center gap-3">

@@ -1,0 +1,10 @@
+﻿{
+  "profiles": {
+    "ChatService.Api": {
+      "commandName": "Project",
+      "applicationUrl": "http://localhost:5007",
+      "launchUrl": "swagger",
+      "environmentVariables": { "ASPNETCORE_ENVIRONMENT": "Development" }
+    }
+  }
+}

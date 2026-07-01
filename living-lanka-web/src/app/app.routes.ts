@@ -19,6 +19,7 @@ export const routes: Routes = [
       { path: 'post-ad', canActivate: [authGuard], loadComponent: () => import('./pages/post-ad/post-ad.component').then((m) => m.PostAdComponent) },
       { path: 'admin/pricing', canActivate: [authGuard], loadComponent: () => import('./pages/admin/admin-pricing.component').then((m) => m.AdminPricingComponent) },
       { path: 'my-listings', canActivate: [authGuard], loadComponent: () => import('./pages/my-listings/my-listings.component').then((m) => m.MyListingsComponent) },
+      { path: 'my-media', canActivate: [authGuard], loadComponent: () => import('./pages/media/media-library.component').then((m) => m.MediaLibraryComponent) },
       { path: 'profile', canActivate: [authGuard], loadComponent: () => import('./pages/profile/profile.component').then((m) => m.ProfileComponent) },
       { path: 'login', loadComponent: () => import('./pages/login/login.component').then((m) => m.LoginComponent) },
       { path: 'register', loadComponent: () => import('./pages/register/register.component').then((m) => m.RegisterComponent) },

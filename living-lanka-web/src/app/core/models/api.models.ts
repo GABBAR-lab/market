@@ -266,6 +266,7 @@ export interface UpdateProfileRequest {
   lastName: string;
   bio?: string;
   phoneNumber?: string;
+  avatarUrl?: string;
   language?: string;
   currency?: string;
   timezone?: string;

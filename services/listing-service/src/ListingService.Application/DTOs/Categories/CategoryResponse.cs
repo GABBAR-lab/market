@@ -10,5 +10,8 @@ public record CategoryResponse(
     int SortOrder,
     bool IsActive,
     int ListingCount,
+    decimal PerDayPriceSale,
+    decimal PerDayPriceBuy,
+    decimal PerDayPriceRent,
     DateTime CreatedAt,
     DateTime? UpdatedAt);

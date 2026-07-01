@@ -262,6 +262,9 @@ public class CategoryService : ICategoryService
         category.SortOrder,
         category.IsActive,
         listingCount,
+        category.PerDayPriceSale,
+        category.PerDayPriceBuy,
+        category.PerDayPriceRent,
         category.CreatedAt,
         category.UpdatedAt);
 

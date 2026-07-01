@@ -17,6 +17,7 @@ public interface IListingService
     Task<Result<ListingDetailResponse>> SubmitForReviewAsync(Guid id, Guid sellerId, bool isAdmin);
     Task<Result<ListingDetailResponse>> PublishAsync(Guid id);
     Task<Result<ListingDetailResponse>> RejectAsync(Guid id);
+    Task<Result<ListingDetailResponse>> ActivateAfterPaymentAsync(Guid id, bool requireApproval);
     Task<Result<ListingDetailResponse>> MarkAsSoldAsync(Guid id, Guid sellerId, bool isAdmin);
     Task<Result<ListingDetailResponse>> FeatureAsync(Guid id, FeatureListingRequest request);
     Task<Result<ListingDetailResponse>> RemoveFeaturedAsync(Guid id);

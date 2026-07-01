@@ -15,7 +15,12 @@ if ($confirm -ne "YES") {
 $databases = @(
     "MarketPlaceIdentityDb",
     "MarketPlaceProfileDb",
-    "MarketPlaceListingDb"
+    "MarketPlaceListingDb",
+    "MarketPlaceMediaDb",
+    "MarketPlacePaymentDb",
+    "MarketPlaceNotificationDb",
+    "MarketPlaceChatDb",
+    "MarketPlaceLoggingDb"
 )
 
 $server = "localhost"

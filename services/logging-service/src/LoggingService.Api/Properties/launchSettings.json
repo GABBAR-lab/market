@@ -1,0 +1,10 @@
+﻿{
+  "profiles": {
+    "LoggingService.Api": {
+      "commandName": "Project",
+      "applicationUrl": "http://localhost:5008",
+      "launchUrl": "swagger",
+      "environmentVariables": { "ASPNETCORE_ENVIRONMENT": "Development" }
+    }
+  }
+}

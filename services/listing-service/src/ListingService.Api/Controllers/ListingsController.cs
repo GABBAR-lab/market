@@ -173,6 +173,19 @@ public class ListingsController : ControllerBase
         return Ok(result.Value);
     }
 
+    [HttpPost("{id:guid}/activate-after-payment")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ActivateAfterPayment(Guid id, [FromBody] ActivateAfterPaymentRequest request)
+    {
+        var result = await _listingService.ActivateAfterPaymentAsync(id, request.RequireApproval);
+        if (!result.IsSuccess)
+        {
+            return BadRequest(new { error = result.Error });
+        }
+
+        return Ok(result.Value);
+    }
+
     [HttpPost("{id:guid}/sold")]
     [Authorize]
     public async Task<IActionResult> MarkAsSold(Guid id)

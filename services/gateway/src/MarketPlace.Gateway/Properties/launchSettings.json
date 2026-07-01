@@ -1,0 +1,9 @@
+﻿{
+  "profiles": {
+    "MarketPlace.Gateway": {
+      "commandName": "Project",
+      "applicationUrl": "http://localhost:5009",
+      "environmentVariables": { "ASPNETCORE_ENVIRONMENT": "Development" }
+    }
+  }
+}
